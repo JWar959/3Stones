@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build 3 Stones",
+      "type": "shell",
+      "command": "g++",
+      "args": ["src/*.cpp","-std=c++17","-O2","-g","-o","${workspaceFolder}/three_stones"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    }
+  ]
+}

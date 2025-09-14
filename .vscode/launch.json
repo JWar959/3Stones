@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug 3 Stones (g++)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/three_stones",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",          // MinGW: e.g. C:/msys64/mingw64/bin/gdb.exe
+      "preLaunchTask": "Build 3 Stones",
+      "externalConsole": true
+    }
+  ]
+}
