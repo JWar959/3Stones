@@ -1,41 +1,41 @@
-# Prerequisites
-*.d
+# Compiled binary
+three_stones
+three_stones.exe
 
-# Compiled Object files
-*.slo
-*.lo
+# Object files
 *.o
 *.obj
 
-# Precompiled Headers
+# Precompiled headers
 *.gch
 *.pch
 
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
+# Compiled dynamic libs
 *.so
 *.dylib
 *.dll
 
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
+# Compiled static libs
 *.a
 *.lib
 
-# Executables
-*.exe
-*.out
-*.app
+# Debug files
+*.dSYM/
+*.pdb
 
-# debug information files
-*.dwo
+# Logs and temp files
+*.log
+*.tmp
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# Backup zips (so you don’t push your submissions accidentally)
+*.zip
