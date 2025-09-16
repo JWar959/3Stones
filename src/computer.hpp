@@ -23,6 +23,8 @@ private:
     int myPts{0};
     int oppBestPts{0};
     int utility{0};
+    // will show if this move blocks an immediate threat
+    bool blocked{false};  
   };
 
   Scored evaluateBestFor(Board& board,
@@ -35,4 +37,7 @@ private:
 
   void enumLegalCells(Board& board, Coord lastOpp, std::vector<Coord>& out);
   void candidateStones(const Inventory& inv, std::vector<Stone>& out) const;
+
+  bool isOpponentThreatAt(Board& board, const Coord& p, Stone opponentColor);
+  static std::string rationaleText(const Scored& s);
 };

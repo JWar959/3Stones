@@ -5,16 +5,12 @@
 * Date:  2025-09-09
 *********************************************************************/
 
+
 #include "computer.hpp"
-#include <vector>
 #include <limits>
 #include <cstdlib>
 
 // Helper: list legal target cells based on last opponent move and row/col rule
-#include "computer.hpp"
-#include <limits>
-#include <cstdlib>  // rand
-
 void Computer::enumLegalCells(Board& board, Coord lastOpp, std::vector<Coord>& out) {
   out.clear();
   if (lastOpp.r == -1) {
@@ -33,7 +29,6 @@ void Computer::enumLegalCells(Board& board, Coord lastOpp, std::vector<Coord>& o
 
 void Computer::candidateStones(const Inventory& inv, std::vector<Stone>& out) const {
   out.clear();
-  // prefer own color first if available
   if (inv.myColor == Stone::B) {
     if (inv.black>0) out.push_back(Stone::B);
     if (inv.white>0) out.push_back(Stone::W);
@@ -42,6 +37,23 @@ void Computer::candidateStones(const Inventory& inv, std::vector<Stone>& out) co
     if (inv.black>0) out.push_back(Stone::B);
   }
   if (inv.clear>0) out.push_back(Stone::C);
+}
+
+// Would opponent score immediately if they played at p right now?
+bool Computer::isOpponentThreatAt(Board& board, const Coord& p, Stone opponentColor) {
+  if (!board.isValidPocket(p.r,p.c) || !board.isEmpty(p.r,p.c)) return false;
+
+  Stone prev = board.getStone(p.r, p.c);
+
+  board.setStone(p.r, p.c, opponentColor);
+  auto ptsOwn = board.scoreFromPlacement(p, opponentColor, opponentColor).first;
+  board.restoreStone(p.r, p.c, prev);
+  if (ptsOwn >= 1) return true;
+
+  board.setStone(p.r, p.c, Stone::C);
+  auto ptsClear = board.scoreFromPlacement(p, Stone::C, opponentColor).first;
+  board.restoreStone(p.r, p.c, prev);
+  return ptsClear >= 1;
 }
 
 int Computer::opponentBestResponsePts(Board& board, Coord ourMovePos, Stone opponentColor) {
@@ -64,10 +76,8 @@ int Computer::opponentBestResponsePts(Board& board, Coord ourMovePos, Stone oppo
   return best;
 }
 
-Computer::Scored Computer::evaluateBestFor(Board& board,
-                         Coord lastOpp,
-                         Stone actorColor,
-                         const Inventory& actorInv,
+Computer::Scored Computer::evaluateBestFor(Board& board, Coord lastOpp,
+                         Stone actorColor, const Inventory& actorInv,
                          Stone opponentColor) {
   std::vector<Coord> cells;
   enumLegalCells(board, lastOpp, cells);
@@ -79,6 +89,9 @@ Computer::Scored Computer::evaluateBestFor(Board& board,
   best.utility = std::numeric_limits<int>::min();
 
   for (const Coord& p : cells) {
+    // Check explicit block: if opponent could score at p now, occupying p is a block
+    bool blocks = isOpponentThreatAt(board, p, opponentColor);
+
     for (Stone s : stones) {
       Stone prev = board.getStone(p.r, p.c);
       board.setStone(p.r, p.c, s);
@@ -87,10 +100,14 @@ Computer::Scored Computer::evaluateBestFor(Board& board,
       int myPts = deltas.first;
       int oppBest = opponentBestResponsePts(board, p, opponentColor);
 
-      int util = (myPts * 100) - (oppBest * 100);
-      if (s == Stone::C) util -= 1;
+      // Utility: maximize self; minimize opponent; prioritize explicit blocks.
+      int util = (myPts * 100) - (oppBest * 100) + (blocks ? 1000 : 0);
+
+      // conserve clears slightly
+      if (s == Stone::C) util -= 1; 
 
       bool better = (util > best.utility) ||
+                    (util == best.utility && blocks && !best.blocked) ||
                     (util == best.utility && myPts > best.myPts) ||
                     (util == best.utility && myPts == best.myPts && oppBest < best.oppBestPts);
 
@@ -99,6 +116,7 @@ Computer::Scored Computer::evaluateBestFor(Board& board,
         best.myPts = myPts;
         best.oppBestPts = oppBest;
         best.m = Move{p, s, true};
+        best.blocked = blocks;
       }
       board.restoreStone(p.r, p.c, prev);
     }
@@ -106,12 +124,26 @@ Computer::Scored Computer::evaluateBestFor(Board& board,
   return best;
 }
 
+static std::string posStr(const Coord& p) {
+  return "(" + std::to_string(p.r+1) + "," + std::to_string(p.c+1) + ")";
+}
+
+std::string Computer::rationaleText(const Scored& s) {
+  std::string why;
+  why += "It selected " + stoneToString(s.m.played) + " at " + posStr(s.m.pos) + " ";
+  why += "(+" + std::to_string(s.myPts) + " now";
+  if (s.oppBestPts > 0) why += ", opp next best +" + std::to_string(s.oppBestPts);
+  why += ").";
+  if (s.blocked) why += " Blocks an immediate opponent score.";
+  return why;
+}
+
 Move Computer::chooseMove(Board& board, Coord lastOpp) {
-  const auto& myInv = this->inv();
-  Stone myColor = myInv.myColor;
+  const auto& invMe = this->inv();
+  Stone myColor  = invMe.myColor;
   Stone oppColor = (myColor == Stone::B ? Stone::W : Stone::B);
 
-  auto scored = evaluateBestFor(board, lastOpp, myColor, myInv, oppColor);
+  auto scored = evaluateBestFor(board, lastOpp, myColor, invMe, oppColor);
 
   if (!scored.m.isValid) {
     std::vector<Coord> cells;
@@ -119,19 +151,21 @@ Move Computer::chooseMove(Board& board, Coord lastOpp) {
     if (!cells.empty()) {
       Coord p = cells[std::rand() % cells.size()];
       Stone s = myColor;
-      if ((myColor==Stone::B && myInv.black==0) || (myColor==Stone::W && myInv.white==0)) {
-        if (myInv.clear>0) s = Stone::C;
-        else s = oppColor;
+      if ((myColor==Stone::B && invMe.black==0) || (myColor==Stone::W && invMe.white==0)) {
+        s = (invMe.clear>0) ? Stone::C : oppColor;
       }
-      return Move{p, s, true};
+      return Move{p, s, true, "Fallback move (no evaluated best)."};
     }
   }
+
+  scored.m.rationale = rationaleText(scored);
   return scored.m;
 }
 
 Move Computer::recommendForHuman(Board& board, Coord lastOpp, Stone humanColor, const Inventory& humanInv) {
-  Stone computerColor = (humanColor == Stone::B ? Stone::W : Stone::B);
-  auto scored = evaluateBestFor(board, lastOpp, humanColor, humanInv, computerColor);
+  Stone compColor = (humanColor == Stone::B ? Stone::W : Stone::B);
+  auto scored = evaluateBestFor(board, lastOpp, humanColor, humanInv, compColor);
+  scored.m.rationale = "Recommendation for you: " + rationaleText(scored);
   return scored.m;
 }
 

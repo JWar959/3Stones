@@ -12,4 +12,6 @@ struct Move {
   Coord pos;
   Stone played{Stone::Empty};
   bool isValid{false};
+  // Explaination for UI/help
+  std::string rationale;
 };

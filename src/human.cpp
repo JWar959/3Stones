@@ -35,19 +35,22 @@ static Stone readStoneFromInv(const Inventory& inv,
     if (ch=='W' && inv.white>0) return Stone::W;
     if (ch=='C' && inv.clear>0) return Stone::C;
     if (ch=='H') {
-      if (helpCb) {
-        Move rec = helpCb(board, oppLast, myColor, inv);
-        if (rec.isValid) {
-          std::cout << "Help: Try " << stoneToString(rec.played)
-                    << " at (" << rec.pos.r+1 << "," << rec.pos.c+1 << ").\n";
-        } else {
-          std::cout << "Help: No recommendation available.\n";
-        }
-      } else {
-        std::cout << "Help is not available right now.\n";
+  if (helpCb) {
+    Move rec = helpCb(board, oppLast, myColor, inv);
+    if (rec.isValid) {
+      std::cout << "Help: Try " << stoneToString(rec.played)
+                << " at (" << rec.pos.r+1 << "," << rec.pos.c+1 << ").\n";
+      if (!rec.rationale.empty()) {
+        std::cout << rec.rationale << "\n";
       }
-      continue; // reprompt for B/W/C
+    } else {
+      std::cout << "Help: No recommendation available.\n";
     }
+  } else {
+    std::cout << "Help is not available right now.\n";
+  }
+  continue;
+}
     std::cout << "Not available. Choose again.\n";
   }
 }
@@ -60,4 +63,3 @@ Move Human::chooseMove(Board& board, Coord oppLast) {
   m.isValid = true;
   return m;
 }
-

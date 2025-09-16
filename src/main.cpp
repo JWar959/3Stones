@@ -43,8 +43,27 @@ int main() {
 
       if (round.applyMove(m)) {
         std::cout << round.lastMoveExplanation() << "\n";
+        if (!m.rationale.empty() && !round.currentIsHuman()) { // the mover was computer
+          std::cout << m.rationale << "\n";
+        }
         moved = true;
+
+        // Offer serialize and quit option
+        std::cout << "Serialize and quit? (Y/N): ";
+        char ans; std::cin >> ans; ans = std::toupper(static_cast<unsigned char>(ans));
+        if (ans=='Y') {
+          bool nextIsHuman = round.currentIsHuman();    // whose turn *next*
+          Coord lastOpp    = round.lastOpponentCoord(); // last move coord (0-based)
+          if (Serializer::save(board, human, cpu, nextIsHuman, lastOpp, "save.txt")) {
+            std::cout << "Saved to save.txt. Exiting...\n";
+
+            return 0;
+          } else {
+              std::cout << "Save failed.\n";
+          }
+        }
       } else {
+        // If we're here, an illegal move as happened
         if (round.currentIsHuman()) {
           std::cout << "Illegal move; try again.\n";
           // The human's chooseMove() will re-prompt on the next loop iteration.
