@@ -13,17 +13,43 @@
 #include "serializer.hpp"
 #include "tournament.hpp"
 #include <iostream>
+#include <string>   // for std::string
+#include <cctype>   // for std::toupper
 
 int main() {
   std::cout << "Welcome to 3 Stones!\n";
+
   Board board;
   BoardView view;
   Human human("Human");
   Computer cpu("Computer");
   Tournament tour;
 
+  char mode;
+  std::cout << "(N)ew game or (R)esume from file? ";
+  std::cin >> mode; 
+  mode = std::toupper(static_cast<unsigned char>(mode));
+
+  bool nextIsHuman = true;
+  Coord lastOpp{-1,-1};
+
+  if (mode == 'R') {
+    std::string fname;
+    std::cout << "Enter filename: ";
+    std::cin >> fname;
+    if (!Serializer::load(board, human, cpu, nextIsHuman, lastOpp, fname)) {
+      std::cout << "Load failed. Starting new game.\n";
+      nextIsHuman = true; 
+      lastOpp = {-1,-1};
+    }
+  }
+
   Round round(board, human, cpu);
-  round.decideFirstPlayerWithCoinCall();
+  if (mode == 'R') {
+    round.initFromLoad(nextIsHuman, lastOpp);
+  } else {
+    round.decideFirstPlayerWithCoinCall();
+  }
 
   // Wire help: let Human call into Computer’s recommender when 'H' is pressed
   human.setHelpCallback([&cpu](Board& b, Coord lastOpp, Stone humanColor, const Inventory& humanInv) {
@@ -35,7 +61,7 @@ int main() {
 
     bool moved = false;
     int retries = 0;
-    const int MAX_RETRIES = 500; // safety cap to avoid infinite loops on bugs
+    const int MAX_RETRIES = 500; // safety cap
 
     while (!moved && retries < MAX_RETRIES) {
       Player& cur = round.current();
@@ -43,32 +69,33 @@ int main() {
 
       if (round.applyMove(m)) {
         std::cout << round.lastMoveExplanation() << "\n";
-        if (!m.rationale.empty() && !round.currentIsHuman()) { // the mover was computer
+        if (!m.rationale.empty() && !round.currentIsHuman()) { // last mover was computer
           std::cout << m.rationale << "\n";
         }
         moved = true;
 
         // Offer serialize and quit option
         std::cout << "Serialize and quit? (Y/N): ";
-        char ans; std::cin >> ans; ans = std::toupper(static_cast<unsigned char>(ans));
-        if (ans=='Y') {
-          bool nextIsHuman = round.currentIsHuman();    // whose turn *next*
-          Coord lastOpp    = round.lastOpponentCoord(); // last move coord (0-based)
-          if (Serializer::save(board, human, cpu, nextIsHuman, lastOpp, "save.txt")) {
+        char ans; 
+        std::cin >> ans; 
+        ans = std::toupper(static_cast<unsigned char>(ans));
+        if (ans == 'Y') {
+          bool nextIsHumanOut = round.currentIsHuman();     // whose turn next
+          Coord lastOppOut    = round.lastOpponentCoord();  // last move (0-based)
+          if (Serializer::save(board, human, cpu, nextIsHumanOut, lastOppOut, "save.txt")) {
             std::cout << "Saved to save.txt. Exiting...\n";
-
             return 0;
           } else {
-              std::cout << "Save failed.\n";
+            std::cout << "Save failed.\n";
           }
         }
       } else {
-        // If we're here, an illegal move as happened
+        // Illegal move occurred
         if (round.currentIsHuman()) {
           std::cout << "Illegal move; try again.\n";
-          // The human's chooseMove() will re-prompt on the next loop iteration.
+          // Human will be re-prompted next iteration
         } else {
-          // Computer: silent retry (no spam).
+          // Computer: silent retry
         }
         ++retries;
       }
@@ -78,9 +105,9 @@ int main() {
       std::cout << "Turn skipped: no legal move found.\n";
       break; // exit the outer while
     }
-  } // <-- closes while (!round.isOver())
+  } // while (!round.isOver())
 
-  // These belong AFTER the loop
+  // After the loop
   tour.recordRoundOutcome(human, cpu);
   std::cout << "Round over. Points - Human: " << human.inv().points
             << ", Computer: " << cpu.inv().points << "\n";
@@ -88,4 +115,3 @@ int main() {
 
   return 0;
 }
-

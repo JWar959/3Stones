@@ -9,6 +9,100 @@
 #include "computer.hpp"
 #include <limits>
 #include <cstdlib>
+#include <vector>
+#include <algorithm>
+
+// We need to store a list of all possible recommended moves to the player
+std::vector<Computer::ScoredLine>
+Computer::listAllHumanCandidates(Board& board, Coord lastOpp,
+                                 Stone humanColor, const Inventory& humanInv) {
+  Stone oppColor = (humanColor == Stone::B ? Stone::W : Stone::B);
+
+  std::vector<Coord> cells;
+  enumLegalCells(board, lastOpp, cells);
+
+  std::vector<Stone> stones;
+  candidateStones(humanInv, stones); // includes both colors + clear if available
+
+  std::vector<ScoredLine> out;
+  out.reserve(cells.size() * stones.size());
+
+  for (const Coord& p : cells) {
+    bool blocks = isOpponentThreatAt(board, p, oppColor);
+    for (Stone s : stones) {
+      Stone prev = board.getStone(p.r, p.c);
+      board.setStone(p.r, p.c, s);
+
+      auto deltas = board.scoreFromPlacement(p, s, humanColor);
+      int myPts    = deltas.first;
+      int oppBest  = opponentBestResponsePts(board, p, oppColor);
+      int util     = (myPts * 100) - (oppBest * 100) + (blocks ? 1000 : 0);
+      if (s == Stone::C) util -= 1;
+
+      Move m{p, s, true};
+      out.push_back(ScoredLine{m, myPts, oppBest, util, blocks});
+
+      board.restoreStone(p.r, p.c, prev);
+    }
+  }
+  // sort best-first for nice display
+  std::sort(out.begin(), out.end(), [](const ScoredLine& a, const ScoredLine& b){
+    if (a.utility != b.utility) return a.utility > b.utility;
+    if (a.blocked != b.blocked) return a.blocked;      // prefer blocks
+    if (a.myPts   != b.myPts)   return a.myPts > b.myPts;
+    return a.oppBestPts < b.oppBestPts;
+  });
+  return out;
+}
+
+Move Computer::recommendForHuman(Board& board, Coord lastOpp,
+                                 Stone humanColor, const Inventory& humanInv) {
+  auto all = listAllHumanCandidates(board, lastOpp, humanColor, humanInv);
+  if (all.empty()) return Move{}; // invalid
+
+  // Bias: prefer human's own color unless an opponent color move gives strictly
+  // higher utility OR is the only move that blocks an immediate threat.
+  int bestIdxOwn = -1, bestIdxAny = 0;
+  for (int i = 0; i < (int)all.size(); ++i) {
+    if (all[i].m.played == humanColor || all[i].m.played == Stone::C) {
+      if (bestIdxOwn == -1) bestIdxOwn = i;
+    }
+    if (all[i].utility > all[bestIdxAny].utility) bestIdxAny = i;
+  }
+
+  // Check if there exists an opponent color move that is a strictly better blocker.
+  int bestOppIdx = -1;
+  for (int i = 0; i < (int)all.size(); ++i) {
+    if (all[i].m.played != humanColor && all[i].m.played != Stone::C) {
+      if (bestOppIdx == -1 || all[i].utility > all[bestOppIdx].utility) bestOppIdx = i;
+    }
+  }
+
+  int pick = bestIdxOwn;
+  if (pick == -1) pick = bestIdxAny; // no own/clear available
+
+  // If an opponent color move strictly improves utility or is the only blocking move, allow it
+  if (bestOppIdx != -1) {
+    bool onlyBlockIsOpp = false;
+    bool anyOwnBlocks = false;
+    for (const auto& s : all) {
+      if (s.blocked && (s.m.played == humanColor || s.m.played == Stone::C)) { anyOwnBlocks = true; break; }
+    }
+    if (!anyOwnBlocks) {
+      for (const auto& s : all) { if (s.blocked && s.m.played != humanColor && s.m.played != Stone::C) { onlyBlockIsOpp = true; break; } }
+    }
+    if (onlyBlockIsOpp || all[bestOppIdx].utility > all[pick].utility) pick = bestOppIdx;
+  }
+
+  auto chosen = all[pick];
+  // Rationale string
+  Computer::Scored s;
+  s.m = chosen.m; s.myPts = chosen.myPts; s.oppBestPts = chosen.oppBestPts; s.utility = chosen.utility; s.blocked = chosen.blocked;
+  chosen.m.rationale = "Recommendation: " + rationaleText(s);
+  return chosen.m;
+}
+
+
 
 // Helper: list legal target cells based on last opponent move and row/col rule
 void Computer::enumLegalCells(Board& board, Coord lastOpp, std::vector<Coord>& out) {
@@ -162,11 +256,11 @@ Move Computer::chooseMove(Board& board, Coord lastOpp) {
   return scored.m;
 }
 
-Move Computer::recommendForHuman(Board& board, Coord lastOpp, Stone humanColor, const Inventory& humanInv) {
+/* Move Computer::recommendForHuman(Board& board, Coord lastOpp, Stone humanColor, const Inventory& humanInv) {
   Stone compColor = (humanColor == Stone::B ? Stone::W : Stone::B);
   auto scored = evaluateBestFor(board, lastOpp, humanColor, humanInv, compColor);
   scored.m.rationale = "Recommendation for you: " + rationaleText(scored);
   return scored.m;
-}
+} */
 
 

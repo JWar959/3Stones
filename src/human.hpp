@@ -9,6 +9,7 @@
 #pragma once
 #include "player.hpp"
 #include <functional>
+#include <string>
 
 class Human : public Player {
 public:
@@ -16,6 +17,7 @@ public:
 
     // A callback Human can invoke when the user presses 'H'
     // Signature: (board, lastOpp, humanColor, humanInventory) -> Move
+    using HelpFn = std::function<Move(Board&, Coord, Stone, const Inventory&)>;
     void setHelpCallback(std::function<Move(Board&, Coord, Stone, const Inventory&)> cb) {
         helpCb_ = std::move(cb);
     }
@@ -27,6 +29,7 @@ public:
     const Inventory& inv() const { return inv_; }
 
 private:
+    HelpFn help_;
     std::string name_;
     Inventory inv_;
     std::function<Move(Board&, Coord, Stone, const Inventory&)> helpCb_;

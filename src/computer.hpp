@@ -15,8 +15,20 @@ public:
   explicit Computer(const std::string& name) : Player(name, PlayerKind::Computer) {}
 
   Move chooseMove(Board& board, Coord lastOpp) override;
+  
+  // Recommendation for human based off of their CORRECT color
   Move recommendForHuman(Board& board, Coord lastOpp, Stone humanColor, const Inventory& humanInv);
 
+  // list all human plays for the help screen
+  struct ScoredLine {
+    Move m;
+    int myPts{0};
+    int oppBestPts{0};
+    int utility{0};
+    bool blocked{false};
+  };
+  std::vector<ScoredLine> listAllHumanCandidates(Board& board, Coord lastOpp,
+                                                 Stone humanColor, const Inventory& humanInv);
 private:
   struct Scored {
     Move m{};
