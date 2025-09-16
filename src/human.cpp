@@ -42,13 +42,18 @@ static Stone readStoneFromInv(const Inventory& inv,
 
     if (ch == 'H') {
       if (help) {
-        Move rec = help(board, oppLast, myColor, inv);
-        std::cout << "Help: Try " << stoneToString(rec.played)
-                  << " at (" << rec.pos.r + 1 << "," << rec.pos.c + 1 << ").\n";
+          Move rec = help(board, oppLast, myColor, inv);
+          if (rec.isValid) {
+              std::cout << "Help: Try " << stoneToString(rec.played)
+                        << " at (" << rec.pos.r+1 << "," << rec.pos.c+1 << ").\n";
+              if (!rec.rationale.empty()) std::cout << rec.rationale << "\n";
+          } else {
+              std::cout << "Help not available right now.\n";
+          }
       } else {
-        std::cout << "Help not available.\n";
+          std::cout << "Help not available.\n";
       }
-      continue; // re-ask for a stone
+    continue; // re-prompt for B/W/C or another H (important!)
     }
 
     if (ch == 'B' && inv.black > 0) return Stone::B;
