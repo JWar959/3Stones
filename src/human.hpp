@@ -5,11 +5,29 @@
 * Date:  2025-09-09
 *********************************************************************/
 
+// human.hpp
 #pragma once
 #include "player.hpp"
+#include <functional>
 
 class Human : public Player {
 public:
-  Human(std::string name) : Player(std::move(name), PlayerKind::Human) {}
-  Move chooseMove(const Board& board, const Coord& oppLast) override;
+    explicit Human(const std::string& name) : Player(name, PlayerKind::Human) {}
+
+    // A callback Human can invoke when the user presses 'H'
+    // Signature: (board, lastOpp, humanColor, humanInventory) -> Move
+    void setHelpCallback(std::function<Move(Board&, Coord, Stone, const Inventory&)> cb) {
+        helpCb_ = std::move(cb);
+    }
+
+    Move chooseMove(Board& board, Coord oppLast) override;
+
+    const std::string& name() const { return name_; }
+    Inventory& inv() { return inv_; }
+    const Inventory& inv() const { return inv_; }
+
+private:
+    std::string name_;
+    Inventory inv_;
+    std::function<Move(Board&, Coord, Stone, const Inventory&)> helpCb_;
 };

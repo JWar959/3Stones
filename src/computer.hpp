@@ -7,10 +7,32 @@
 
 #pragma once
 #include "player.hpp"
-#include <random>
+#include "board.hpp"
+#include <vector>
 
 class Computer : public Player {
 public:
-  Computer(std::string name) : Player(std::move(name), PlayerKind::Computer) {}
-  Move chooseMove(const Board& board, const Coord& oppLast) override;
+  explicit Computer(const std::string& name) : Player(name, PlayerKind::Computer) {}
+
+  Move chooseMove(Board& board, Coord lastOpp) override;
+  Move recommendForHuman(Board& board, Coord lastOpp, Stone humanColor, const Inventory& humanInv);
+
+private:
+  struct Scored {
+    Move m{};
+    int myPts{0};
+    int oppBestPts{0};
+    int utility{0};
+  };
+
+  Scored evaluateBestFor(Board& board,
+                         Coord lastOpp,
+                         Stone actorColor,
+                         const Inventory& actorInv,
+                         Stone opponentColor);
+
+  int opponentBestResponsePts(Board& board, Coord ourMovePos, Stone opponentColor);
+
+  void enumLegalCells(Board& board, Coord lastOpp, std::vector<Coord>& out);
+  void candidateStones(const Inventory& inv, std::vector<Stone>& out) const;
 };

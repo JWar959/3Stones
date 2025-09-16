@@ -27,7 +27,11 @@ public:
 
   // quick printer (BoardView provides a nicer one)
   void print() const; 
-
+  // force set (valid pocket required), returns old->new validity
+  bool setStone(int r, int c, Stone s);
+  // convenience   
+  Stone getStone(int r, int c) const;     
+  void  restoreStone(int r, int c, Stone prev);
 private:
   std::array<std::array<Pocket,11>,11> grid_;
   void initShape();

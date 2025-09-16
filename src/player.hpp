@@ -26,7 +26,7 @@ class Player {
 public:
   Player(std::string name, PlayerKind kind) : name_(std::move(name)), kind_(kind) {}
   virtual ~Player() = default;
-  virtual Move chooseMove(const Board& board, const Coord& oppLast) = 0;
+  virtual Move chooseMove(Board& board, Coord lastOpp) = 0;
 
   const std::string& name() const { return name_; }
   PlayerKind kind() const { return kind_; }

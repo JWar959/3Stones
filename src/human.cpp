@@ -5,6 +5,7 @@
 * Date:  2025-09-09
 *********************************************************************/
 
+// human.cpp
 #include "human.hpp"
 #include <iostream>
 #include <limits>
@@ -21,25 +22,42 @@ static int readIntInRange(const std::string& prompt, int lo, int hi) {
   }
 }
 
-static Stone readStoneFromInv(const Inventory& inv) {
+static Stone readStoneFromInv(const Inventory& inv,
+                              Board& board,
+                              Coord oppLast,
+                              std::function<Move(Board&, Coord, Stone, const Inventory&)> helpCb,
+                              Stone myColor) {
   while (true) {
-    std::cout << "Stone to play (B/W/C): ";
+    std::cout << "Stone to play (B/W/C) or H for help: ";
     char ch; if (!(std::cin >> ch)) { std::cin.clear(); continue; }
     ch = std::toupper(static_cast<unsigned char>(ch));
     if (ch=='B' && inv.black>0) return Stone::B;
     if (ch=='W' && inv.white>0) return Stone::W;
     if (ch=='C' && inv.clear>0) return Stone::C;
+    if (ch=='H') {
+      if (helpCb) {
+        Move rec = helpCb(board, oppLast, myColor, inv);
+        if (rec.isValid) {
+          std::cout << "Help: Try " << stoneToString(rec.played)
+                    << " at (" << rec.pos.r+1 << "," << rec.pos.c+1 << ").\n";
+        } else {
+          std::cout << "Help: No recommendation available.\n";
+        }
+      } else {
+        std::cout << "Help is not available right now.\n";
+      }
+      continue; // reprompt for B/W/C
+    }
     std::cout << "Not available. Choose again.\n";
   }
 }
 
-Move Human::chooseMove(const Board& board, const Coord& oppLast) {
-  // legality is enforced in Round::applyMove
-  (void)board; (void)oppLast; 
+Move Human::chooseMove(Board& board, Coord oppLast) {
   Move m;
-  m.played = readStoneFromInv(this->inv());
+  m.played = readStoneFromInv(this->inv(), board, oppLast, helpCb_, this->inv().myColor);
   m.pos.r = readIntInRange("Row (1-11): ", 1, 11) - 1;
   m.pos.c = readIntInRange("Col (1-11): ", 1, 11) - 1;
   m.isValid = true;
   return m;
 }
+

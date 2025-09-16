@@ -28,6 +28,20 @@ void Board::initShape() {
   }
 }
 
+Stone Board::getStone(int r, int c) const {
+    return at(r,c).s;
+}
+
+bool Board::setStone(int r, int c, Stone s) {
+    if (!isValidPocket(r,c)) return false;
+    grid_[r][c].s = s;
+    return true;
+}
+
+void Board::restoreStone(int r, int c, Stone prev) {
+    grid_[r][c].s = prev;
+}
+
 bool Board::inBounds(int r, int c) const {
   return r>=0 && r<11 && c>=0 && c<11;
 }

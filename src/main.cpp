@@ -25,6 +25,11 @@ int main() {
   Round round(board, human, cpu);
   round.decideFirstPlayerWithCoinCall();
 
+  // Wire help: let Human call into Computer’s recommender when 'H' is pressed
+  human.setHelpCallback([&cpu](Board& b, Coord lastOpp, Stone humanColor, const Inventory& humanInv) {
+    return cpu.recommendForHuman(b, lastOpp, humanColor, humanInv);
+  });
+
   while (!round.isOver()) {
     view.print(board);
 
