@@ -1,10 +1,9 @@
 /*********************************************************************
 * Name:  John Warren
-* Project:  3 Stones – Milestone 1
+* Project:  3 Stones – Milestone 2
 * Class:  CMPS 366
-* Date:  2025-09-09
+* Date:  2025-09-016
 *********************************************************************/
-
 #include "human.hpp"
 #include "types.hpp"
 #include <iostream>

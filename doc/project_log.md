@@ -72,3 +72,54 @@
 
 **Total time today:** ~1 hour 50 minutes
 
+
+---
+
+# 📝 `doc/project_log.md` (Milestone 2 entry)
+
+```markdown
+# Project Log — John Warren
+CMPS 366 — 3 Stones
+Milestone 2
+
+---
+
+## 2025-09-16
+**Design (0.5h)**  
+- Reviewed Milestone 2 requirements from instructions and rubric.
+- Planned strategy improvements for Computer: self-3, block-3.
+
+**Coding (1.5h)**  
+- Implemented `Computer::recommendForHuman` and move rationale strings.
+- Updated `Human` to support help key (`H`) and print best suggestion.
+- Extended `Round::applyMove` to record rationale.
+- Fixed Player constructor usage in Human/Computer to align with `PlayerKind`.
+- Integrated serialization prompt after each move.
+
+**Debugging (1.0h)**  
+- Resolved multiple compile errors (curly bracket mismatch, missing includes, wrong type signatures).
+- Fixed `stoneToChar` overload issues and vector-related errors in Computer class.
+- Corrected help callback wiring (`helpCb` → `help`).
+- Adjusted serialization load to restore `lastOppCoord` and next player correctly.
+- Verified color consistency in help mode (suggestions match human’s actual color).
+
+**Testing (1.0h)**  
+- Ran full round to confirm:
+  - Computer move rationales print.
+  - Help suggestions appear with correct color.
+  - Illegal move spam suppressed.
+  - Serialization works: save to `save.txt` and resume properly.
+- Verified scoring triples in rows and diagonals award points correctly.
+
+**Total: 4.0h**
+
+---
+
+## Summary
+Milestone 2 is complete.  
+- Computer implements at least two strategies (completing own 3-in-a-row, blocking opponent).  
+- Computer provides rationale for each move.  
+- Human help mode suggests legal plays and best strategy.  
+- Full serialization/resume is operational.  
+- Documentation (manual, log, rubric) updated.
+
