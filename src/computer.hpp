@@ -17,7 +17,11 @@ public:
   Move chooseMove(Board& board, Coord lastOpp) override;
   
   // Recommendation for human based off of their CORRECT color
-  Move recommendForHuman(Board& board, Coord lastOpp, Stone humanColor, const Inventory& humanInv);
+  Move recommendForHuman(Board& board,
+                       Coord lastOpp,
+                       Stone humanColor,
+                       const Inventory& humanInv);
+
 
   // list all human plays for the help screen
   struct ScoredLine {

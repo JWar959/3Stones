@@ -5,11 +5,13 @@
 * Date:  2025-09-09
 *********************************************************************/
 
-// human.cpp
 #include "human.hpp"
+#include "types.hpp"
 #include <iostream>
 #include <limits>
 #include <cctype>
+
+// ---------- small local helpers (file-scope) ----------
 
 static int readIntInRange(const std::string& prompt, int lo, int hi) {
   while (true) {
@@ -22,11 +24,11 @@ static int readIntInRange(const std::string& prompt, int lo, int hi) {
   }
 }
 
-// Prompts for stone, supports 'H' to ask for help via callback
+// Reads a stone and optionally uses the help callback when user enters 'H'
 static Stone readStoneFromInv(const Inventory& inv,
                               Board& board,
                               Coord oppLast,
-                              Human::HelpFn recommendCb,
+                              const Human::HelpFn& help,
                               Stone myColor) {
   while (true) {
     std::cout << "Stone to play (B/W/C) or H for help: ";
@@ -39,16 +41,14 @@ static Stone readStoneFromInv(const Inventory& inv,
     ch = std::toupper(static_cast<unsigned char>(ch));
 
     if (ch == 'H') {
-      if (!recommendCb) {
-        std::cout << "Help not available right now.\n";
-        continue;
+      if (help) {
+        Move rec = help(board, oppLast, myColor, inv);
+        std::cout << "Help: Try " << stoneToString(rec.played)
+                  << " at (" << rec.pos.r + 1 << "," << rec.pos.c + 1 << ").\n";
+      } else {
+        std::cout << "Help not available.\n";
       }
-      Move rec = recommendCb(board, oppLast, myColor, inv);
-      std::cout << "Help: try " << stoneToString(rec.played)
-                << " at (" << rec.pos.r + 1 << "," << rec.pos.c + 1 << ")";
-      if (!rec.rationale.empty()) std::cout << " — " << rec.rationale;
-      std::cout << "\n";
-      continue;
+      continue; // re-ask for a stone
     }
 
     if (ch == 'B' && inv.black > 0) return Stone::B;
@@ -59,11 +59,14 @@ static Stone readStoneFromInv(const Inventory& inv,
   }
 }
 
+// ---------- Human implementation ----------
+
 Move Human::chooseMove(Board& board, Coord oppLast) {
   Move m;
-  m.played = readStoneFromInv(this->inv(), board, oppLast, this->help_, this->inv().myColor);
-  m.pos.r  = readIntInRange("Row (1-11): ", 1, 11) - 1;
-  m.pos.c  = readIntInRange("Col (1-11): ", 1, 11) - 1;
+  Stone myColor = this->inv().myColor; // human’s actual color
+  m.played = readStoneFromInv(this->inv(), board, oppLast, help_, myColor);
+  m.pos.r = readIntInRange("Row (1-11): ", 1, 11) - 1;
+  m.pos.c = readIntInRange("Col (1-11): ", 1, 11) - 1;
   m.isValid = true;
   return m;
 }
