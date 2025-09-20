@@ -8,8 +8,11 @@
 #pragma once
 #include "types.hpp"
 #include "move.hpp"
-#include "board.hpp"
+//#include "board.hpp"
 #include <string>
+
+
+class Board;
 
 enum class PlayerKind { Human, Computer };
 
@@ -19,7 +22,13 @@ struct Inventory {
   int clear{6};
   int points{0};
   int roundsWon{0};
-  Stone myColor{Stone::B}; // assigned after coin toss & color selection
+  // assigned after coin toss & color selection
+  Stone myColor{Stone::B};
+
+  // adding a function here to help set these values when loading in a saved game from a file
+  Inventory() = default;
+  Inventory(Stone color, int pts, int nb, int nw, int nc, int rw)
+    : black(nb), white(nw), clear(nc), points(pts), roundsWon(rw), myColor(color) {}
 };
 
 class Player {
@@ -32,6 +41,9 @@ public:
   PlayerKind kind() const { return kind_; }
   const Inventory& inv() const { return inv_; }
   Inventory& inv() { return inv_; }
+
+  //let the serializer install a parsed inventory atomically
+  void setInventory(const Inventory& in) { inv_ = in; }
 
 protected:
   std::string name_;

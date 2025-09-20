@@ -90,37 +90,38 @@ void Board::print() const {
 }
 
 std::pair<int,int> Board::scoreFromPlacement(const Coord& p, Stone played, Stone myColor) const {
-  (void)played; // scoring depends on the actual stones on the board, not the chosen color directly
+  // scoring depends on the actual stones on the board, not the chosen color directly
+  (void)played; 
 
   auto oppColor = (myColor == Stone::B ? Stone::W : Stone::B);
 
   // Helper to check a 3-cell window and return points for (me, opp)
   auto scoreTriple = [&](Coord a, Coord b, Coord c) -> std::pair<int,int> {
-    // All three must be valid pockets and not Empty
-    auto ok = [&](const Coord& q){
-      return isValidPocket(q.r,q.c) && at(q.r,q.c).s != Stone::Empty;
-    };
-    if (!(ok(a) && ok(b) && ok(c))) return {0,0};
+    // Ensure pockets are valid
+    if (!(isValidPocket(a.r,a.c) && isValidPocket(b.r,b.c) && isValidPocket(c.r,c.c)))
+        return {0,0};
 
+    // Cache stone values to avoid repeated at() calls
     Stone s1 = at(a.r,a.c).s;
     Stone s2 = at(b.r,b.c).s;
     Stone s3 = at(c.r,c.c).s;
 
+    // Any Empty -> no score
+    if (s1 == Stone::Empty || s2 == Stone::Empty || s3 == Stone::Empty)
+        return {0,0};
+
     auto allIn = [&](Stone color){
-      // “All stones are player's color or Clear”
       return ((s1==color || s1==Stone::C) &&
               (s2==color || s2==Stone::C) &&
               (s3==color || s3==Stone::C));
     };
-    auto allClear = (s1==Stone::C && s2==Stone::C && s3==Stone::C);
 
-    int me = 0, opp = 0;
-    if (!allClear) {
-      if (allIn(myColor))  me  = 1;
-      if (allIn(oppColor)) opp = 1;
-    }
+    bool allClear = (s1==Stone::C && s2==Stone::C && s3==Stone::C);
+
+    int me  = (!allClear && allIn(myColor))  ? 1 : 0;
+    int opp = (!allClear && allIn(oppColor)) ? 1 : 0;
     return {me, opp};
-  };
+};
 
   // We only need 4 base directions; we’ll slide 3 windows that INCLUDE p:
   // [-2,-1,0], [-1,0,1], [0,1,2] along each axis.

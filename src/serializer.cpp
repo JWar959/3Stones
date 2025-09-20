@@ -6,12 +6,33 @@
 *********************************************************************/
 
 #include "serializer.hpp"
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <algorithm>
+#include <cctype>
+
+
+
 
 static char stoneChar(Stone s) { return stoneToChar(s); }
+
+// Helper function to help with whitespace issues
+static inline void trim(std::string& s) {
+    auto notsp = [](int ch){ return !std::isspace(ch); };
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), notsp));
+    s.erase(std::find_if(s.rbegin(), s.rend(), notsp).base(), s.end());
+}
+
+// helper function to help deal with formatting during reading / loading files
+static bool starts_with_label(std::string s, const char* label) {
+    trim(s);
+    // compare only up to label length; tolerate trailing spaces after colon
+    if (s.size() < std::strlen(label)) return false;
+    return std::equal(label, label+std::strlen(label), s.begin());
+}
 
 static void writeBoard(std::ostream& out, const Board& b) {
   out << "Board:\n";
@@ -57,74 +78,81 @@ bool Serializer::save(const Board& b,
   return true;
 }
 
-// NOTE: Implementing a robust parser is a bit longer; here’s a minimal loader
-// that expects the exact format we write in save().
-bool Serializer::load(Board& b,
-                      Player& human, Player& computer,
-                      bool& nextIsHuman, Coord& lastOpp,
-                      const std::string& filename) {
-  std::ifstream in(filename);
-  if (!in) return false;
+bool Serializer::load(Board& b, Player& human, Player& cpu,
+                      bool& nextIsHuman, Coord& lastOpp, const std::string& filename)
+{
+    std::ifstream in(filename);
+    if (!in) return false;
 
-  std::string line;
+    std::string line;
 
-  auto readInv = [&](Player& P, const std::string& prefix){
-    std::getline(in, line);
-    if (line.rfind(prefix, 0) != 0) return false;
-    std::istringstream ss(line.substr(prefix.size()));
-    std::string color; int pts, nb, nw, nc, rw;
-    if (!(ss >> color >> pts >> nb >> nw >> nc >> rw)) return false;
-    auto& I = P.inv();
-    I.myColor = (color=="Black"? Stone::B : Stone::W);
-    I.points = pts; I.black = nb; I.white = nw; I.clear = nc; I.roundsWon = rw;
-    return true;
-  };
-
-  if (!readInv(human, "Human Player: ")) return false;
-  if (!readInv(computer, "Computer Player: ")) return false;
-
-  // Next Player
-  std::getline(in, line);
-  {
-    if (line.rfind("Next Player: ", 0) != 0) return false;
-    std::istringstream ss(line.substr(std::string("Next Player: ").size()));
-    std::string who; int rr, cc;
-    if (!(ss >> who >> rr >> cc)) return false;
-    nextIsHuman = (who=="Human");
-    if (rr<=0 || cc<=0) lastOpp = {-1,-1};
-    else lastOpp = {rr-1, cc-1};
-  }
-
-  // Board header
-  std::getline(in, line); // Should be "Board:"
-  if (line != "Board:") return false;
-
-  // Clear board and read 11 printed rows
-  // (We’ll reconstruct by scanning tokens line-by-line)
-  // First, blank the board:
-  for (int r=0;r<11;++r) for (int c=0;c<11;++c)
-    if (b.isValidPocket(r,c)) b.restoreStone(r,c,Stone::Empty);
-
-  for (int r=0; r<11; ++r) {
-    if (!std::getline(in, line)) return false;
-    std::istringstream ss(line);
-    std::vector<char> tokens;
-    char tok;
-    while (ss >> tok) tokens.push_back(tok);
-
-    // Walk across columns; assign only to valid pockets, in left-to-right order
-    int t = 0;
-    for (int c=0;c<11;++c) {
-      if (!b.isValidPocket(r,c)) continue;
-      if (t >= (int)tokens.size()) return false;
-      char ch = tokens[t++];
-      Stone s = Stone::Empty;
-      if (ch=='B') s=Stone::B;
-      else if (ch=='W') s=Stone::W;
-      else if (ch=='C') s=Stone::C;
-      else s=Stone::Empty;
-      b.restoreStone(r,c,s);
+    // Human Player
+    if (!std::getline(in, line) || !starts_with_label(line, "Human Player:")) return false;
+    {
+        std::istringstream iss(line.substr(line.find(':')+1));
+        std::string color; int pts, nb, nw, nc, rounds;
+        if (!(iss >> color >> pts >> nb >> nw >> nc >> rounds)) return false;
+        Stone humanColor = (color == "Black" ? Stone::B : Stone::W);
+        Inventory inv(humanColor, pts, nb, nw, nc, rounds);
+        human.setInventory(inv);
     }
-  }
-  return true;
+
+    // Computer Player
+    if (!std::getline(in, line) || !starts_with_label(line, "Computer Player:")) return false;
+    {
+        std::istringstream iss(line.substr(line.find(':')+1));
+        std::string color; int pts, nb, nw, nc, rounds;
+        if (!(iss >> color >> pts >> nb >> nw >> nc >> rounds)) return false;
+        Stone cpuColor = (color == "Black" ? Stone::B : Stone::W);
+        Inventory inv(cpuColor, pts, nb, nw, nc, rounds);
+        cpu.setInventory(inv);
+    }
+
+    // Next Player
+    if (!std::getline(in, line) || !starts_with_label(line, "Next Player:")) return false;
+    {
+        std::istringstream iss(line.substr(line.find(':')+1));
+        std::string who; int r, c;
+        if (!(iss >> who >> r >> c)) return false;
+        nextIsHuman = (who == "Human");
+        // If the player coming in had no last move, we'll handle it safely below
+        if (r <= 0 || c <= 0) lastOpp = {-1, -1};
+        else                  lastOpp = {r-1, c-1};
+    }
+
+    // Board label (tolerate trailing space)
+    if (!std::getline(in, line) || !starts_with_label(line, "Board:")) return false;
+
+    // expected pocket counts per row in order
+    const int counts[11] = {3,5,7,9,11,10,11,9,7,5,3};
+    // clear board first
+    b = Board();
+
+    for (int r = 0; r < 11; ++r) {
+        if (!std::getline(in, line)) return false;
+        std::istringstream row(line);
+        std::vector<char> toks;
+        std::string tok;
+        while (row >> tok) {
+            if (!tok.empty()) toks.push_back(std::toupper(static_cast<unsigned char>(tok[0])));
+        }
+        if ((int)toks.size() != counts[r]) return false;
+
+        // compute column start so tokens line up into the octagon pockets
+        int start = (11 - counts[r]) / 2;
+        int ci = 0;
+        for (int c = 0; c < 11; ++c) {
+            if (c < start || c >= start + counts[r]) continue; // outside octagon
+            if (r == 5 && c == 5) continue; // center void
+            char ch = toks[ci++];
+            Stone s = Stone::Empty;
+            if (ch == 'B') s = Stone::B;
+            else if (ch == 'W') s = Stone::W;
+            else if (ch == 'C') s = Stone::C;
+            else s = Stone::Empty; // treat unknown as empty
+            if (s != Stone::Empty) b.place(r, c, s);
+        }
+    }
+
+    return true;
 }
