@@ -12,6 +12,23 @@
 #include <cstdlib>
 #include <string>
 
+/*
+This function makes sure that round gets fully intialized after a load.
+It tracks which player is Black/White from the players inventories, whose turn
+it is from nextIsHuman, and the opponents last move lastOppCoord_
+*/
+void Round::initFromLoad(bool nextIsHuman, Coord lastOpp) {
+  // Re-derive black_/white_ from inventories
+  black_  = (human_->inv().myColor == Stone::B) ? human_ : computer_;
+  white_  = (human_->inv().myColor == Stone::W) ? human_ : computer_;
+
+  // Set next to move
+  turn_ = nextIsHuman ? human_ : computer_;
+
+  // Set the “opponent’s last move” anchor for row/col restriction
+  lastOppCoord_ = lastOpp;
+}
+
 Round::Round(Board& b, Player& human, Player& computer)
   : board_(b), human_(&human), computer_(&computer), black_(human_), white_(computer_), turn_(black_) {}
 
@@ -119,13 +136,18 @@ bool Round::applyMove(const Move& m) {
   else if (m.played==Stone::C && inv.clear>0) inv.clear--;
   else return false;
 
+  // Place and score
   board_.place(m.pos.r, m.pos.c, m.played);
   auto deltas = board_.scoreFromPlacement(m.pos, m.played, inv.myColor);
   inv.points += deltas.first;
   other().inv().points += deltas.second;
 
+  // Going to capture who just took a turn, so we can output it to the console along with what the turn was
+  const std::string activePlayer = currentIsHuman() ? human_->name() : computer_->name();
+
   lastExplanation_ =
-    std::string("Placed ") + stoneToString(m.played) + " at (" +
+    activePlayer +
+    std::string(" placed ") + stoneToString(m.played) + " at (" +
     std::to_string(m.pos.r + 1) + "," + std::to_string(m.pos.c + 1) + "). " +
     "Scored +" + std::to_string(deltas.first) + " for current player" +
     (deltas.second ? (", opponent +" + std::to_string(deltas.second) + ".")

@@ -22,10 +22,7 @@ public:
   bool currentIsHuman() const { return turn_ == human_; }
 
   // Helper function to load previous game
-  void initFromLoad(bool nextIsHuman, Coord lastOpp) {
-    lastOppCoord_ = lastOpp;
-    turn_ = nextIsHuman ? human_ : computer_;
-  }
+  void initFromLoad(bool nextIsHuman, Coord lastOpp);
 
   std::string lastMoveExplanation() const { return lastExplanation_; }
   Coord lastOpponentCoord() const { return lastOppCoord_; }

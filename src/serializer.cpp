@@ -14,9 +14,6 @@
 #include <algorithm>
 #include <cctype>
 
-
-
-
 static char stoneChar(Stone s) { return stoneToChar(s); }
 
 // Helper function to help with whitespace issues
@@ -114,7 +111,7 @@ bool Serializer::load(Board& b, Player& human, Player& cpu,
         std::istringstream iss(line.substr(line.find(':')+1));
         std::string who; int r, c;
         if (!(iss >> who >> r >> c)) return false;
-        nextIsHuman = (who == "Human");
+            nextIsHuman = (who == "Human");
         if (r <= 0 || c <= 0) {
             // If we're here, then it means there was no last move yet
             lastOpp = {-1, -1};     

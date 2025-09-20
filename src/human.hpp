@@ -8,12 +8,13 @@
 #pragma once
 #include "player.hpp"
 #include <functional>
+#include <string>
 
 class Human : public Player {
 public:
   using HelpFn = std::function<Move(Board&, Coord, Stone, const Inventory&)>;
   explicit Human(const std::string& name) : Player(name, PlayerKind::Human) {}
-
+  static std::string inputName();
   Move chooseMove(Board& board, Coord oppLast) override;
 
   void setHelpCallback(HelpFn cb) { help_ = std::move(cb); }

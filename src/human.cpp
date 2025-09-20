@@ -9,6 +9,8 @@
 #include <iostream>
 #include <limits>
 #include <cctype>
+#include <string>
+#include <fstream>
 
 // ---------- small local helpers (file-scope) ----------
 
@@ -21,6 +23,26 @@ static int readIntInRange(const std::string& prompt, int lo, int hi) {
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::cout << "Invalid input. Try again.\n";
   }
+}
+
+// Reads a name and returns it
+std::string Human::inputName()
+{
+    // VariAable Declorations
+    std::string name;
+    
+    // Exhaust Leading nextline characters
+    std::cout <<"Please enter your first name" << std::endl;
+    while( std::cin.peek() == '\n' )
+        {
+            std::cin.ignore();
+        }
+    
+    // Input Event
+    
+    std::getline( std::cin, name );
+    // Return event
+    return name;
 }
 
 // Reads a stone and optionally uses the help callback when user enters 'H'
