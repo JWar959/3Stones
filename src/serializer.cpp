@@ -115,42 +115,57 @@ bool Serializer::load(Board& b, Player& human, Player& cpu,
         std::string who; int r, c;
         if (!(iss >> who >> r >> c)) return false;
         nextIsHuman = (who == "Human");
-        // If the player coming in had no last move, we'll handle it safely below
-        if (r <= 0 || c <= 0) lastOpp = {-1, -1};
-        else                  lastOpp = {r-1, c-1};
+        if (r <= 0 || c <= 0) {
+            // If we're here, then it means there was no last move yet
+            lastOpp = {-1, -1};     
+        } else {
+            // If we're here, than there was a last move saved, and file is 1-based so we'll subtract 1 to match the board
+            lastOpp = {r-1, c-1};   
+        }
     }
 
-    // Board label (tolerate trailing space)
+    // Board label
+    /*
+    Instead of guessing a range, ask the Board which pockets are valid on that row 
+    and then map the tokens to those positions, in order. This will automatically handle the center void and 
+    the tapered octagon edges
+    */
     if (!std::getline(in, line) || !starts_with_label(line, "Board:")) return false;
 
-    // expected pocket counts per row in order
-    const int counts[11] = {3,5,7,9,11,10,11,9,7,5,3};
-    // clear board first
+    // Reset board to its shape (valid masks set, stones empty)
     b = Board();
 
     for (int r = 0; r < 11; ++r) {
         if (!std::getline(in, line)) return false;
+
+        // tokenize row into chars (O/W/B/C), ignore spacing/indentation
         std::istringstream row(line);
         std::vector<char> toks;
         std::string tok;
         while (row >> tok) {
             if (!tok.empty()) toks.push_back(std::toupper(static_cast<unsigned char>(tok[0])));
         }
-        if ((int)toks.size() != counts[r]) return false;
 
-        // compute column start so tokens line up into the octagon pockets
-        int start = (11 - counts[r]) / 2;
-        int ci = 0;
+        // gather valid columns for this row from the board's mask
+        std::vector<int> validCols;
         for (int c = 0; c < 11; ++c) {
-            if (c < start || c >= start + counts[r]) continue; // outside octagon
-            if (r == 5 && c == 5) continue; // center void
-            char ch = toks[ci++];
+            if (b.isValidPocket(r, c)) validCols.push_back(c);
+        }
+
+        // expect exactly one token per valid pocket
+        if ((int)toks.size() != (int)validCols.size()){
+            return false;
+        } 
+
+        // place tokens into those valid pockets
+        for (size_t i = 0; i < validCols.size(); ++i) {
+            char ch = toks[i];
             Stone s = Stone::Empty;
             if (ch == 'B') s = Stone::B;
             else if (ch == 'W') s = Stone::W;
             else if (ch == 'C') s = Stone::C;
-            else s = Stone::Empty; // treat unknown as empty
-            if (s != Stone::Empty) b.place(r, c, s);
+            // 'O' or anything else stays Empty
+            if (s != Stone::Empty) b.place(r, validCols[i], s);
         }
     }
 

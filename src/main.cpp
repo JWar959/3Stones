@@ -44,11 +44,29 @@ int main() {
     }
   }
 
+  // We'll want to make sure we display which player made the last move (if any), as well
+  // as what that move actually was. This ensures the player will know what move they can make 
+  // next based off of the last move that gets displayed.
   Round round(board, human, cpu);
   if (mode == 'R') {
-    round.initFromLoad(nextIsHuman, lastOpp);
-  } else {
-    round.decideFirstPlayerWithCoinCall();
+    std::cout << "\n=== Resumed Game ===\n";
+    std::cout << "Next to move: " << (nextIsHuman ? human.name() : cpu.name()) << "\n";
+
+    if (lastOpp.r >= 0 && lastOpp.c >= 0) {
+      char st = stoneToChar(board.at(lastOpp.r, lastOpp.c).s);
+      std::cout << "Last move: " 
+                << (nextIsHuman ? cpu.name() : human.name())  // last mover is the other one
+                << " played " << st 
+                << " at (" << (lastOpp.r+1) << "," << (lastOpp.c+1) << ")\n";
+
+      // Optional: remind the legal-placement rule
+      std::cout << "Rule: Your move must be in row " << (lastOpp.r+1)
+                << " or column " << (lastOpp.c+1)
+                << " if any open pockets remain there.\n";
+    } else {
+      std::cout << "No moves have been played yet.\n";
+    }
+    std::cout << "====================\n\n";
   }
 
   // Wire help: let Human call into Computer’s recommender when 'H' is pressed
@@ -58,6 +76,12 @@ int main() {
 
   while (!round.isOver()) {
     view.print(board);
+    // Print a reminder as to the rules of the game for ease of use
+    if (round.lastOpponentCoord().r >= 0) {
+      std::cout << "Legal placements must be in row " << (round.lastOpponentCoord().r+1)
+                << " or column " << (round.lastOpponentCoord().c+1)
+                << " (unless both are full).\n";
+    }
 
     bool moved = false;
     int retries = 0;

@@ -10,5 +10,6 @@
 #include <iomanip>
 
 void BoardView::print(const Board& b) const {
-  b.print(); // delegate to Board's quick printer for now
+  // delegated to Board's quick printer for now
+  b.print(); 
 }
