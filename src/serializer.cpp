@@ -76,17 +76,54 @@ bool Serializer::save(const Board& b,
 }
 
 bool Serializer::load(Board& b, Player& human, Player& cpu,
-                      bool& nextIsHuman, Coord& lastOpp, const std::string& filename)
+                      bool& nextIsHuman, Coord& lastOpp,
+                      const std::string& filename)
 {
-    std::ifstream in(filename);
+    std::ifstream in(filename, std::ios::binary);
     if (!in) return false;
 
-    std::string line;
+    // Read entire file into a single string
+    std::string all((std::istreambuf_iterator<char>(in)),
+                    std::istreambuf_iterator<char>());
 
-    // Human Player
-    if (!std::getline(in, line) || !starts_with_label(line, "Human Player:")) return false;
+    // Normalize whitespace a bit (optional but resilient)
+    auto squeeze = [](std::string s) {
+        // turn CRLF into LF, ensure spaces between labels if missing
+        for (auto& ch : s) if (ch == '\r') ch = '\n';
+        return s;
+    };
+    all = squeeze(all);
+
+    // Find label positions
+    auto find_lbl = [&](const char* lbl)->std::size_t {
+        return all.find(lbl);
+    };
+
+    const char* L_HUM = "Human Player:";
+    const char* L_CPU = "Computer Player:";
+    const char* L_NEXT= "Next Player:";
+    const char* L_BRD = "Board:";
+
+    std::size_t pH = find_lbl(L_HUM);
+    std::size_t pC = find_lbl(L_CPU);
+    std::size_t pN = find_lbl(L_NEXT);
+    std::size_t pB = find_lbl(L_BRD);
+
+    if (pH == std::string::npos || pC == std::string::npos ||
+        pN == std::string::npos || pB == std::string::npos)
+        return false;
+
+    auto after = [&](std::size_t p, const char* lbl){ return p + std::strlen(lbl); };
+
+    // Slice sections (trimmed later by stringstreams)
+    std::string humanPart = all.substr(after(pH,L_HUM), pC - after(pH,L_HUM));
+    std::string cpuPart   = all.substr(after(pC,L_CPU), pN - after(pC,L_CPU));
+    std::string nextPart  = all.substr(after(pN,L_NEXT), pB - after(pN,L_NEXT));
+    std::string boardPart = all.substr(after(pB,L_BRD)); // to end
+
+    // ---- Parse human ----
     {
-        std::istringstream iss(line.substr(line.find(':')+1));
+        std::istringstream iss(humanPart);
         std::string color; int pts, nb, nw, nc, rounds;
         if (!(iss >> color >> pts >> nb >> nw >> nc >> rounds)) return false;
         Stone humanColor = (color == "Black" ? Stone::B : Stone::W);
@@ -94,10 +131,9 @@ bool Serializer::load(Board& b, Player& human, Player& cpu,
         human.setInventory(inv);
     }
 
-    // Computer Player
-    if (!std::getline(in, line) || !starts_with_label(line, "Computer Player:")) return false;
+    // ---- Parse computer ----
     {
-        std::istringstream iss(line.substr(line.find(':')+1));
+        std::istringstream iss(cpuPart);
         std::string color; int pts, nb, nw, nc, rounds;
         if (!(iss >> color >> pts >> nb >> nw >> nc >> rounds)) return false;
         Stone cpuColor = (color == "Black" ? Stone::B : Stone::W);
@@ -105,63 +141,45 @@ bool Serializer::load(Board& b, Player& human, Player& cpu,
         cpu.setInventory(inv);
     }
 
-    // Next Player
-    if (!std::getline(in, line) || !starts_with_label(line, "Next Player:")) return false;
+    // ---- Parse next player ----
     {
-        std::istringstream iss(line.substr(line.find(':')+1));
+        std::istringstream iss(nextPart);
         std::string who; int r, c;
         if (!(iss >> who >> r >> c)) return false;
-            nextIsHuman = (who == "Human");
-        if (r <= 0 || c <= 0) {
-            // If we're here, then it means there was no last move yet
-            lastOpp = {-1, -1};     
-        } else {
-            // If we're here, than there was a last move saved, and file is 1-based so we'll subtract 1 to match the board
-            lastOpp = {r-1, c-1};   
-        }
+        nextIsHuman = (who == "Human");
+        if (r <= 0 || c <= 0) lastOpp = {-1,-1};
+        else lastOpp = {r-1, c-1}; // file is 1-based
     }
 
-    // Board label
-    /*
-    Instead of guessing a range, ask the Board which pockets are valid on that row 
-    and then map the tokens to those positions, in order. This will automatically handle the center void and 
-    the tapered octagon edges
-    */
-    if (!std::getline(in, line) || !starts_with_label(line, "Board:")) return false;
+    // ---- Parse board tokens (works for single-line or multi-line) ----
+    // Tokenize everything after "Board:" by whitespace
+    std::istringstream bss(boardPart);
+    std::vector<char> tokens;
+    std::string t;
+    while (bss >> t) {
+        if (!t.empty())
+            tokens.push_back(static_cast<char>(std::toupper(static_cast<unsigned char>(t[0]))));
+    }
 
-    // Reset board to its shape (valid masks set, stones empty)
+    // Reset/shape the board
     b = Board();
 
+    // Place tokens row-by-row into valid pockets
+    std::size_t idx = 0;
     for (int r = 0; r < 11; ++r) {
-        if (!std::getline(in, line)) return false;
-
-        // tokenize row into chars (O/W/B/C), ignore spacing/indentation
-        std::istringstream row(line);
-        std::vector<char> toks;
-        std::string tok;
-        while (row >> tok) {
-            if (!tok.empty()) toks.push_back(std::toupper(static_cast<unsigned char>(tok[0])));
-        }
-
-        // gather valid columns for this row from the board's mask
+        // collect valid columns for this row
         std::vector<int> validCols;
-        for (int c = 0; c < 11; ++c) {
+        for (int c = 0; c < 11; ++c)
             if (b.isValidPocket(r, c)) validCols.push_back(c);
-        }
 
-        // expect exactly one token per valid pocket
-        if ((int)toks.size() != (int)validCols.size()){
-            return false;
-        } 
+        if (idx + validCols.size() > tokens.size()) return false;
 
-        // place tokens into those valid pockets
-        for (size_t i = 0; i < validCols.size(); ++i) {
-            char ch = toks[i];
+        for (std::size_t i = 0; i < validCols.size(); ++i) {
+            char ch = tokens[idx++];
             Stone s = Stone::Empty;
             if (ch == 'B') s = Stone::B;
             else if (ch == 'W') s = Stone::W;
             else if (ch == 'C') s = Stone::C;
-            // 'O' or anything else stays Empty
             if (s != Stone::Empty) b.place(r, validCols[i], s);
         }
     }

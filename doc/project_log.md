@@ -123,3 +123,40 @@ Milestone 2 is complete.
 - Full serialization/resume is operational.  
 - Documentation (manual, log, rubric) updated.
 
+# Project Log — John Warren
+## CMPS 366 — 3 Stones
+## Sep 20, 2025
+
+Sep 20, 2025
+
+Implemented robust file parsing in serializer.cpp: added trim and starts_with_label, tolerated extra spaces, and matched the professor’s sample format for “Human Player”, “Computer Player”, “Next Player”, and “Board:” lines 
+(1.5 hours).
+
+Fixed strlen compile error by including <cstring> and switched equality check to use label-length comparison in starts_with_label 
+(20 mins).
+
+Reworked inventory loading path: added Player::setInventory(const Inventory&) and used it during load to set myColor, counts, points, and roundsWon atomically; removed illegal brace-initializer assignment 
+(45 mins).
+
+Verified loading of professor’s gen.txt and other samples; identified mismatch in our save format vs. load format and standardized both directions (save now mirrors load, including spacing and row tokenization) 
+(1 hour).
+
+Persisted and restored turn state: wrote/parsed “Next Player: … r c” so round.initFromLoad(nextIsHuman, lastOpp) restores whose turn it is and the last move coordinate; fixed duplicate stub definition vs. implementation 
+(30 mins).
+
+Main loop UX: on resume, printed “Next to move” and “Last move … at (r,c)” with reminder of the row/column restriction; added reminder line before each turn if a last move exists 
+(45 mins).
+
+Enforced legality on resume: confirmed “must play in same row/col (unless both full)” by checking anyAvailableOnRowOrCol() and rejecting moves off-line; reproduced and fixed a case where off-line move was incorrectly accepted after load 
+(1 hour).
+
+Help system stability: reconnected Human help callback naming (help_), ensured ‘H’ re-prompts instead of consuming a stone, and displayed the computer’s suggestion with rationale when available 
+(30 mins).
+
+Messaging polish: prefixed move explanations with actor (“Human”/“Computer”), used stoneToString() consistently in messages, and confirmed score deltas print after each legal move 
+(30 mins).
+
+Name prompt: added Human::inputName() and integrated a friendly welcome banner; wired the name into the “Next to move”/“Last move” display for clarity 
+(30 mins).
+
+Total hours today: 7 hours, 10 minutes

@@ -2,7 +2,7 @@
 * Name:  John Warren
 * Project:  3 Stones – Milestone 2
 * Class:  CMPS 366
-* Date:  2025-09-016
+* Date:  2025-09-16
 *********************************************************************/
 
 #include "board.hpp"
