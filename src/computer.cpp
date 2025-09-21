@@ -262,5 +262,3 @@ Move Computer::chooseMove(Board& board, Coord lastOpp) {
   scored.m.rationale = "Recommendation for you: " + rationaleText(scored);
   return scored.m;
 } */
-
-

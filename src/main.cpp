@@ -13,8 +13,9 @@
 #include "serializer.hpp"
 #include "tournament.hpp"
 #include <iostream>
-#include <string>   // for std::string
-#include <cctype>   // for std::toupper
+#include <string>
+#include <cctype>
+#include <sstream>   
 
 // Function prototypes
 // Reset per-round inventory/points but keep roundsWon (tournament stat)
@@ -36,61 +37,36 @@ int main() {
   Human human(firstName);
   human.setHumanName(firstName);
   Computer cpu("Computer");
-/*   char mode;
-  std::cout << "\nWelcome " << firstName << "! (N)ew game or (R)esume from file? ";
-  std::cin >> mode; 
-  mode = std::toupper(static_cast<unsigned char>(mode));
-
-  bool nextIsHuman = true;
-  Coord lastOpp{-1,-1};
-
-  Round round(board, human, cpu); */
-
-/*   // We'll want to make sure we display which player made the last move (if any), as well
-  // as what that move actually was. This ensures the player will know what move they can make 
-  // next based off of the last move that gets displayed.
-  if (mode == 'R') {
-    std::string fname;
-    std::cout << "Enter filename: ";
-    std::cin >> fname;
-
-    if (!Serializer::load(board, human, cpu, nextIsHuman, lastOpp, fname)) {
-      std::cout << "Load failed. Starting new game.\n";
-      nextIsHuman = true; 
-      lastOpp = {-1,-1};
-    }else{
-      // If we're here, load was a success and we can continue with the game
-      std::cout << "\n=== Resumed Game ===\n";
-      std::cout << "Next to move: " << (nextIsHuman ? human.name() : cpu.name()) << "\n";
-
-      if (lastOpp.r >= 0 && lastOpp.c >= 0) {
-        char st = stoneToChar(board.at(lastOpp.r, lastOpp.c).s);
-        std::cout << "Last move: " 
-                  << (nextIsHuman ? cpu.name() : human.name())  // last mover is the other one
-                  << " played " << st 
-                  << " at (" << (lastOpp.r+1) << "," << (lastOpp.c+1) << ")\n";
-
-        // remind the legal-placement rule
-        std::cout << "Rule: Your move must be in row " << (lastOpp.r+1)
-                  << " or column " << (lastOpp.c+1)
-                  << " if any open pockets remain there.\n";
-      } else {
-        std::cout << "No moves have been played yet.\n";
-      }
-    std::cout << "====================\n\n";
-    // we'll need to tell Round who’s next and what the last move was
-    round.initFromLoad(nextIsHuman, lastOpp);
-    }
-  } else{
-
-    // New game path: coin flip + color assignment
-    round.decideFirstPlayerWithCoinCall();
-  } */
 
   // Wire help: let Human call into Computer’s recommender when 'H' is pressed
   human.setHelpCallback([&cpu](Board& b, Coord lastOpp, Stone humanColor, const Inventory& humanInv) {
-    return cpu.recommendForHuman(b, lastOpp, humanColor, humanInv);
-  });
+    auto all = cpu.listAllHumanCandidates(b, lastOpp, humanColor, humanInv);
+    if (all.empty()) return Move{}; // no legal plays
+
+    std::cout << "\nAll legal plays (best first):\n";
+    for (const auto& s : all) {
+        std::cout << "  " << stoneToString(s.m.played)
+                  << " at (" << (s.m.pos.r + 1) << "," << (s.m.pos.c + 1) << ")"
+                  << "  me+=" << s.myPts
+                  << "  opp_best=" << s.oppBestPts
+                  << "  net=" << s.utility
+                  << (s.blocked ? "  [blocks]" : "")
+                  << "\n";
+    }
+
+    // Best candidate is first
+    const auto& top = all.front();
+    Move best = top.m;
+
+    std::ostringstream os;
+    os << "Strategy: " << (top.blocked ? "Block threat" : "Maximize net gain")
+       << " | me+=" << top.myPts
+       << " | opp_best=" << top.oppBestPts
+       << " | net=" << top.utility;
+    best.rationale = os.str();
+
+    return best;
+});
 
   // tournament loop: play one round, then ask to continue
   for (;;) {  

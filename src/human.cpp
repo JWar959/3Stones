@@ -31,17 +31,39 @@ std::string Human::inputName()
     // VariAable Declorations
     std::string name;
     
+    bool checkpoint = true;
     // Exhaust Leading nextline characters
-    std::cout <<"Please enter your first name" << std::endl;
-    while( std::cin.peek() == '\n' )
+    do{
+
+      // Reset the checkpoint to true so future iterations don't get stuck in the loop
+      checkpoint = true;
+      std::cout <<"Please enter your first name" << std::endl;
+      while( std::cin.peek() == '\n' )
         {
             std::cin.ignore();
         }
+      
+      // Input Event
+      
+      std::getline( std::cin, name );
+
+      for (char c : name) {
+          // Check if each character is an alphabet (a-z, A-Z)
+          // You might extend this to include other characters like hyphens or apostrophes
+          // if your definition of a word allows them.
+          
+          if (!std::isalpha(c)) {
+              // Contains non-alphabetic characters
+              checkpoint = false; 
+          }
+        }
+
+        if(name.size() == 0){
+            checkpoint = false;
+          } 
+    }while(!checkpoint);
     
-    // Input Event
-    
-    std::getline( std::cin, name );
-    // Return event
+    // Return name
     return name;
 }
 
