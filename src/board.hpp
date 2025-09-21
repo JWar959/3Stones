@@ -9,6 +9,7 @@
 #include "types.hpp"
 #include <array>
 #include <utility>
+#include <vector>
 
 class Board {
 public:
@@ -24,6 +25,9 @@ public:
 
   // Scoring helper 
   std::pair<int,int> scoreFromPlacement(const Coord& p, Stone played, Stone myColor) const;
+
+  // Debug-only helper: prints only scoring windows that include p.
+  void debugPrintScoringWindows(const Coord& p, Stone myColor) const;
 
   // quick printer (BoardView provides a nicer one)
   void print() const; 

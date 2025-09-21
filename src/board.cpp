@@ -8,6 +8,8 @@
 #include "board.hpp"
 #include <iostream>
 #include <iomanip>
+#include "types.hpp"
+
 
 Board::Board() { initShape(); }
 
@@ -24,7 +26,8 @@ void Board::initShape() {
     for (int c=start; c<start+cnt; ++c) {
       grid_[r][c].valid = true;
     }
-    if (r == 5) grid_[r][5].valid = false; // center void
+    // center void
+    if (r == 5) grid_[r][5].valid = false; 
   }
 }
 
@@ -70,6 +73,50 @@ bool Board::hasEmptyInCol(int c) const {
     for (int r = 0; r < (int)grid_.size(); ++r)
         if (isValidPocket(r,c) && grid_[r][c].s == Stone::Empty) return true;
     return false;
+}
+
+void Board::debugPrintScoringWindows(const Coord& p, Stone myColor) const {
+  Stone oppColor = (myColor == Stone::B ? Stone::W : Stone::B);
+
+  auto allIn = [](Stone a, Stone b, Stone c, Stone color){
+    return ((a==color || a==Stone::C) &&
+            (b==color || b==Stone::C) &&
+            (c==color || c==Stone::C));
+  };
+
+  const int dr[4] = { 1, 0, 1, -1};
+  const int dc[4] = { 0, 1, 1,  1};
+
+  for (int d=0; d<4; ++d) {
+    for (int start=-2; start<=0; ++start) {
+      Coord a{ p.r + (start    )*dr[d], p.c + (start    )*dc[d] };
+      Coord b{ p.r + (start + 1)*dr[d], p.c + (start + 1)*dc[d] };
+      Coord c{ p.r + (start + 2)*dr[d], p.c + (start + 2)*dc[d] };
+
+      if (!(isValidPocket(a.r,a.c) && isValidPocket(b.r,b.c) && isValidPocket(c.r,c.c))) continue;
+
+      Stone s1 = at(a.r,a.c).s;
+      Stone s2 = at(b.r,b.c).s;
+      Stone s3 = at(c.r,c.c).s;
+
+      if (s1 == Stone::Empty || s2 == Stone::Empty || s3 == Stone::Empty) continue;
+
+      bool allClear      = (s1==Stone::C && s2==Stone::C && s3==Stone::C);
+      bool containsClear = (s1==Stone::C || s2==Stone::C || s3==Stone::C);
+
+      int addMe  = (!allClear && allIn(s1,s2,s3,myColor))  ? 1 : 0;
+      int addOpp = (!allClear && containsClear && allIn(s1,s2,s3,oppColor)) ? 1 : 0;
+
+      if (addMe || addOpp) {
+        std::cout << "[score] placed=(" << (p.r+1) << "," << (p.c+1) << ")  "
+                  << "win=(" << (a.r+1) << "," << (a.c+1) << ")-("
+                              << (b.r+1) << "," << (b.c+1) << ")-("
+                              << (c.r+1) << "," << (c.c+1) << ")  "
+                  << "stones=" << stoneToChar(s1) << stoneToChar(s2) << stoneToChar(s3)
+                  << "  me+=" << addMe << "  opp+=" << addOpp << "\n";
+      }
+    }
+  }
 }
 
 const Pocket& Board::at(int r, int c) const { return grid_[r][c]; }
@@ -144,6 +191,7 @@ std::pair<int,int> Board::scoreFromPlacement(const Coord& p, Stone played, Stone
       // Ensure the window actually includes the placed cell p (it always will by construction),
       // and that the midpoints are within the board bounds; validity of pockets is checked inside.
       auto [me, opp] = scoreTriple(a,b,c);
+
       mePts  += me;
       oppPts += opp;
     }

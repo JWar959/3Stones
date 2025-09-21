@@ -140,6 +140,14 @@ bool Round::applyMove(const Move& m) {
   board_.place(m.pos.r, m.pos.c, m.played);
   auto deltas = board_.scoreFromPlacement(m.pos, m.played, inv.myColor);
   inv.points += deltas.first;
+  auto [myAdd, oppAdd] = board_.scoreFromPlacement(m.pos, m.played, inv.myColor);
+
+  // Here we're going to see if any points are being scored, and if they are, we're going to print a debug statement
+  if (myAdd || oppAdd) {
+      // only now print detailed windows (no spam from AI sims)
+      board_.debugPrintScoringWindows(m.pos, inv.myColor);
+  }
+
   other().inv().points += deltas.second;
 
   // Going to capture who just took a turn, so we can output it to the console along with what the turn was
