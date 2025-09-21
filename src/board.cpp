@@ -117,11 +117,16 @@ std::pair<int,int> Board::scoreFromPlacement(const Coord& p, Stone played, Stone
     };
 
     bool allClear = (s1==Stone::C && s2==Stone::C && s3==Stone::C);
+    bool containsClear = (s1==Stone::C || s2==Stone::C || s3==Stone::C);
 
+    // mover scores on mover-or-clear (not all clears)
     int me  = (!allClear && allIn(myColor))  ? 1 : 0;
-    int opp = (!allClear && allIn(oppColor)) ? 1 : 0;
+    
+    // opponent scores this only if a clear is involved
+    int opp = (!allClear && containsClear && allIn(oppColor)) ? 1 : 0;
+    
     return {me, opp};
-};
+  };
 
   // We only need 4 base directions; we’ll slide 3 windows that INCLUDE p:
   // [-2,-1,0], [-1,0,1], [0,1,2] along each axis.

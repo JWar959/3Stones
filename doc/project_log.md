@@ -160,3 +160,172 @@ Name prompt: added Human::inputName() and integrated a friendly welcome banner; 
 (30 mins).
 
 Total hours today: 7 hours, 10 minutes
+
+
+# Project Log — 2025-09-21 (Sun)
+
+## Student: John Warren
+### Course: CMPS 366 — 3 Stones
+### Session Times (EST): 9:10–12:35, 1:15–4:45 (≈6h 55m total)
+
+### Goals for Today
+
+Add “Play another round?” tournament loop per spec.
+
+Make Resume robust: load our save.txt and instructor samples (gen.txt, winning.txt).
+
+Ensure resume shows who moves next and the last move (so row/col legality is clear).
+
+Keep Help (H) correct for the human’s actual color; show rationale.
+
+Minor polish: optional human name input at startup; avoid duplicate prompts.
+
+### Work Completed
+- A) Tournament replay loop
+
+What: After each round, prompt “Play another round? (Y/N)” and either start a new Round or end and print tournament winner by rounds won (not points).
+
+Where: main.cpp
+
+Approach (pseudocode):
+
+do {
+    setup or resume round
+    play round loop
+    announce round winner; tally roundsWon
+} while (user says Y)
+announce tournament winner (by roundsWon)
+
+Why: Matches “The Tournament” section of the assignment.
+
+- B) Resume: loader compatibility & UX
+
+What: Load both our own save.txt and instructor samples (gen.txt, winning.txt) reliably.
+
+Where: serializer.cpp, main.cpp
+
+Key changes:
+
+starts_with_label() + trim() to tolerate spacing after labels.
+
+Board parsing maps tokens to valid pockets per row using the board’s mask (handles tapered octagon + center void).
+
+Next Player: parsing sets nextIsHuman and adjusts lastOpp 1-based→0-based; supports “no last move” with -1 -1.
+
+In main.cpp, after successful load:
+
+Print Next to move and Last move (with 1-based coords and stone).
+
+Print row/col legality reminder.
+
+Removed a duplicate resume block that caused the same file prompt twice.
+
+- C) Help mode correctness
+
+What: Ensure H suggestions honor human’s color and show rationale.
+
+Where: human.cpp, main.cpp
+
+Key changes:
+
+human.setHelpCallback([&cpu](...) { return cpu.recommendForHuman(...); });
+
+readStoneFromInv(...) re-prompts after H (non-consuming), prints rationale when available.
+
+Verified hints as White and Black.
+
+- D) Human name (optional)
+
+What: Added friendly name prompt without breaking serialization paths.
+
+Where: human.hpp/.cpp, main.cpp
+
+Key changes:
+
+Human::inputName() (safe getline w/ leading newline drain).
+
+Human::setHumanName()/getHumanName() (non-breaking; display uses Player::name() for now).
+
+Guarded so Resume flow still works regardless of input name.
+
+- Files Touched (today)
+
+src/main.cpp — tournament loop; single, non-duplicated resume flow; last-move banner; save-and-quit; name prompt.
+
+src/serializer.cpp — tolerant label parsing; valid-pocket mapping; Next Player + lastOpp handling; save/write alignment.
+
+src/human.hpp / src/human.cpp — help callback wiring; color-correct help; inputName, setHumanName, getHumanName.
+
+- Tests Conducted
+
+New -> move-> Save -> Resume (our save.txt)
+
+Observed correct Next to move and Last move banner.
+
+Row/col legality reminder printed.
+
+Computer takes turn first when nextIsHuman == false.
+
+Load instructor samples
+
+gen.txt, winning.txt imported; board shape and stones placed match file.
+
+Legality banner computed from lastOpp. 
+
+Help mode
+
+As White and Black, H suggests a stone color matching the human’s inventory/color and prints rationale.
+
+Tournament flow
+
+After round end, prompt “Play another round? (Y/N)”.
+
+On Y, new round plays; on N, prints tournament winner by roundsWon.
+
+Issues & Resolutions (today)
+
+Duplicate resume prompts
+Symptom: Asked for the filename twice.
+Fix: Consolidated to a single resume branch in main.cpp; removed stale prompt block.
+
+Instructor files not loading fully
+Symptom: Board half-parsed, then “Load failed; starting new game.”
+Fix: Use board’s valid pocket mask per row to map tokens; tolerant starts_with_label(); robust Next Player/lastOpp handling.
+
+Help hints wrong color (earlier regression)
+Fix: Pass human’s color into recommender; re-prompt after H.
+
+Name prompt interfering with resume
+Fix: Read name via getline before mode prompt, draining leading newlines; no impact on loader.
+
+Conformance Notes (rubric alignment snapshot)
+
+Serialization: Save/load works with both our save.txt and the instructor’s formats; last move and next player restored.
+
+Help Mode: Displays a concrete recommended play (stone + pocket) and rationale; respects human’s color/inventory.
+
+Computer Play: Computer only plays stones from its own inventory; prints brief rationale.
+
+Legality: Enforced row/col rule relative to last opponent move; exception when both row & column are full.
+
+Tournament: Replays rounds; winner by rounds won; final announcement on exit.
+
+OOP: Virtual chooseMove, distinct Human/Computer classes, Round orchestrates flow, Serializer isolated, no globals.
+
+Next Steps (for final polishing)
+
+Docs refresh: Manual screenshots (New, Help, Save/Resume, Instructor sample), and today’s log entry.
+
+Comments: Ensure each function header has Purpose/Params/Returns; keep pseudocode bullets for complex functions.
+
+Constants: If any 11/center (5,5) remain in multiple spots, centralize (optional polish).
+
+View separation: Keep model classes print-free where practical (we’re already close).
+
+Status: Feature-complete for demo and rubric; ready for presentation rehearsal.
+
+### Time Spent
+
+Implementation & fixes: ~5h
+
+Testing & verification: ~1h 55m
