@@ -45,6 +45,18 @@ std::string Human::inputName()
     return name;
 }
 
+// Setter for humanName member variable
+void Human::setHumanName(const std::string& name) {
+  humanName_ = name;
+  // sync the Player::name_ here as well so name() returns the new name
+  name_ = name;       
+}
+
+// Getter function for humanName member variable
+std::string Human::getHumanName(){
+  return this->humanName_;
+}
+
 // Reads a stone and optionally uses the help callback when user enters 'H'
 static Stone readStoneFromInv(const Inventory& inv,
                               Board& board,

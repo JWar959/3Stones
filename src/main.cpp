@@ -34,6 +34,7 @@ int main() {
 
   firstName = Human::inputName();
   Human human(firstName);
+  human.setHumanName(firstName);
   Computer cpu("Computer");
 /*   char mode;
   std::cout << "\nWelcome " << firstName << "! (N)ew game or (R)esume from file? ";
@@ -201,7 +202,13 @@ int main() {
     tour.recordRoundOutcome(human, cpu);
     std::cout << "Round over. Points - " << human.name() << ": " << human.inv().points
               << ", " << cpu.name() << ": " << cpu.inv().points << "\n";
-    std::cout << "Rounds won - " << human.name() << ": " << human.inv().roundsWon
+    if(human.inv().points > cpu.inv().points){
+      std::cout << "Congratulations " << human.getHumanName() << "! You won the Round!\n"; 
+    }
+    else{
+      std::cout<< "The Computer wins this round!\n";
+    }          
+    std::cout << "Total Rounds won - " << human.name() << ": " << human.inv().roundsWon
               << ", " << cpu.name() << ": " << cpu.inv().roundsWon << "\n";
 
     // Ask to play another round

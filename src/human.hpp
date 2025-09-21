@@ -18,7 +18,11 @@ public:
   Move chooseMove(Board& board, Coord oppLast) override;
 
   void setHelpCallback(HelpFn cb) { help_ = std::move(cb); }
+  void setHumanName(const std::string& name);
+  const std::string& humanName() const { return humanName_; }
+  std::string getHumanName();
 
 private:
   HelpFn help_;
+  std::string humanName_;
 };
