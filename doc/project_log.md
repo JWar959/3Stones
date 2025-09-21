@@ -329,3 +329,148 @@ Status: Feature-complete for demo and rubric; ready for presentation rehearsal.
 Implementation & fixes: ~5h
 
 Testing & verification: ~1h 55m
+
+# Project Log — 3 Stones (CMPS366)
+
+## Student: John Warren
+## Date: 2025-09-21
+## Round: Milestone 2 → late debugging & polish
+Total time in session: 2h 15m (see per-task times below). 
+
+- Goals for this session
+
+Fix a scoring edge case where blocking with the opponent’s color sometimes “gifted” them a point.
+
+Add targeted scoring traces that fire only on real moves that change the score.
+
+Produce reproducible serialization files to recreate the discovered scenario.
+
+Keep changes aligned with code readability and documentation guidelines. 
+
+cpp-writing-guidelines
+
+### Work completed (what & why)
+
+- Scoring rule fix (Board::scoreFromPlacement) — 45m
+
+Implemented the “no gift on pure opponent triple” rule: the opponent only scores on this turn if the triple that includes the newly placed stone has at least one Clear and is otherwise opponent-color-or-clear; triples of all opponent color (no clears) score 0 on the blocker’s turn.
+
+This matches the project rubric: award points for row/col/diag triples, allow up to 2 clears, no points for 3 clears; our change tightens when the opponent can co-score on your turn. 
+
+cppRubric - Copy
+
+Rationale is also consistent with the narrative examples in the rules. 
+
+3stones-rules
+
+- Window validation & hygiene — 10m
+
+Confirmed each scored 3-window includes the newly placed cell and contains no Empty pockets, to avoid “phantom” points during evaluation. (Keeps to the rubric’s “points only for new arrangements resulting from a play”.) 
+
+cppRubric - Copy
+
+- Debug printing—minimal and actionable — 30m
+
+Added Board::getScoreEventsIncluding(...) and a one-shot summary in Round::applyMove that prints only when (myAdd || oppAdd); it names the line type (row/column/diag ↘/↗) and the three coordinates that formed the triple.
+
+Also kept debugPrintScoringWindows(...) available but gated so it doesn’t spam during Computer/Help simulations (AI search), complying with “user-friendly output” expectations. 
+
+cpp-writing-guidelines
+
+- Reproduction files (serialization) — 20m
+
+Created two text saves that match the course format (Human/Computer lines → Next Player → indented octagon Board; center void on row 6):
+
+repro_before_comp_move.txt — right after John plays B at (3,3); Next Player = Computer; scores 0–0.
+
+repro_after_comp_scored.txt — right after Computer plays B at (3,7); scores 0–1; Next Player = Human.
+
+This follows the required text serialization format and is useful during the demo (prof explicitly tests with serialization). 
+
+3stones-rules
+
+3stones-submission-policy
+
+- Investigation outcome (“facepalm” moment) — 10m
+
+Our trace showed the Computer’s B at (3,7) legitimately completed a descending diagonal (1,5)-(2,6)-(3,7) = BBB, awarding +1 to Computer. This aligns with the rubric’s scoring for diagonals. 
+
+cppRubric - Copy
+
+- Documentation & style alignment — 10m
+
+Ensured changes preserve readability and encapsulation (helpers remain internal; no globals; clear names; comments describe semantics, not syntax). 
+
+cpp-writing-guidelines
+
+cpp-writing-guidelines
+
+3stones-submission-policy
+
+Files & functions touched
+
+src/board.cpp
+
+scoreFromPlacement(...): add containsClear gate for opponent scoring; enforce no-Empty; maintain “include pos” windowing.
+
+getScoreEventsIncluding(...): gather scoring windows (row/col/diag) including the last placement.
+
+src/round.cpp
+
+Round::applyMove(...): after computing (myAdd, oppAdd), print a one-line score summary (dir + three coords) only if points changed.
+
+Tests / repro
+
+Loaded before file, let AI move; observed summary:
+Scored +1 (diag ↘ at (1,5)-(2,6)-(3,7)) → matches board and rubric rules. 
+
+cppRubric - Copy
+
+Verified no “gift” points when a player completes a pure opponent-color triple by playing the opponent’s color (no clears involved) → 0 points awarded that turn (block only). But if a Clear is part of the triple, co-scoring can occur in the same turn—per rules. 
+
+cppRubric - Copy
+
+Open items / next steps
+
+ Tomorrow: wire the concise scoring summary (already drafted) if not committed yet.
+
+ Add a few saved scenarios showcasing: (a) co-scoring via Clear, (b) multi-point single move (stone part of multiple lines). 
+
+cppRubric - Copy
+
+ Screenshot requirements for the manual (help list with rationale; computer move explanation). 
+
+3stones-submission-policy
+
+### Time accounting
+
+- Scoring rule fix: 45m
+
+- Window hygiene & validation: 10m
+
+- Debug summary plumbing: 30m
+
+- Serialization repros: 20m
+
+- Investigation & verification: 10m
+
+- Documentation tidy-ups: 10m
+- Total from session: 2h 15m  
+
+3stones-submission-policy
+
+Generative AI assistance (disclosure)
+
+Areas: Debugging design (scoring logic), instrumentation design (event collector & gated logs), serialization formatting, and authoring this log entry. 
+
+3stones-submission-policy
+
+Representative prompts:
+
+“Fix scoring when human plays opponent color"
+
+“Add trace that prints only when real moves score; identify row/col/diag and coordinates.”
+
+“Build reproduction serialization matching indented octagon layout and center void.”
+
+Nature of help: Design & debugging notes (no wholesale code drops); all code was understood, reviewed, and integrated by the student. (Per policy, assistance is documented and the student can explain the changes.)
