@@ -48,7 +48,7 @@ Computer::listAllHumanCandidates(Board& board, Coord lastOpp,
   // sort best-first for nice display
   std::sort(out.begin(), out.end(), [](const ScoredLine& a, const ScoredLine& b){
     if (a.utility != b.utility) return a.utility > b.utility;
-    if (a.blocked != b.blocked) return a.blocked;      // prefer blocks
+    if (a.blocked != b.blocked) return a.blocked;      
     if (a.myPts   != b.myPts)   return a.myPts > b.myPts;
     return a.oppBestPts < b.oppBestPts;
   });
@@ -255,10 +255,3 @@ Move Computer::chooseMove(Board& board, Coord lastOpp) {
   scored.m.rationale = rationaleText(scored);
   return scored.m;
 }
-
-/* Move Computer::recommendForHuman(Board& board, Coord lastOpp, Stone humanColor, const Inventory& humanInv) {
-  Stone compColor = (humanColor == Stone::B ? Stone::W : Stone::B);
-  auto scored = evaluateBestFor(board, lastOpp, humanColor, humanInv, compColor);
-  scored.m.rationale = "Recommendation for you: " + rationaleText(scored);
-  return scored.m;
-} */

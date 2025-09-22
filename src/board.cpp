@@ -14,20 +14,28 @@
 Board::Board() { initShape(); }
 
 void Board::initShape() {
-  // Row pocket counts: 3,5,7,9,11,10,11,9,7,5,3 ; with a center void at row 5 (0-indexed)
+  // Row pocket counts: 3,5,7,9,11,10,11,9,7,5,3
   int counts[11] = {3,5,7,9,11,10,11,9,7,5,3};
   for (int r=0; r<11; ++r) {
     for (int c=0; c<11; ++c) {
       grid_[r][c].valid = false;
       grid_[r][c].s = Stone::Empty;
     }
+    
+      if (r == 5) {
+      // Problem solution row 6 should be fully populated except the center void
+      // traversing through columns 0 through 10
+      for (int c=0; c<11; ++c) grid_[r][c].valid = true;
+      // center void at (6,6) 
+      grid_[r][5].valid = false;                          
+      continue;
+    }
+
     int cnt = counts[r];
     int start = (11 - cnt) / 2;
     for (int c=start; c<start+cnt; ++c) {
       grid_[r][c].valid = true;
     }
-    // center void
-    if (r == 5) grid_[r][5].valid = false; 
   }
 }
 

@@ -1,6 +1,6 @@
 /*********************************************************************
 * Name:  John Warren
-* Project:  3 Stones – Milestone 2
+* Project:  3 Stones
 * Class:  CMPS 366
 * Date:  2025-09-016
 *********************************************************************/
@@ -90,7 +90,6 @@ int main() {
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
-
 
     bool nextIsHuman = true;
     Coord lastOpp{-1,-1};
@@ -212,11 +211,11 @@ int main() {
         if (std::cin >> again) {
           again = std::toupper(static_cast<unsigned char>(again));
           if (again=='Y' || again=='N') break;
-  }
-  std::cout << "Enter Y or N.\n";
-  std::cin.clear();
-  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-}
+        }
+      std::cout << "Enter Y or N.\n";
+      std::cin.clear();
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
     if (again != 'Y') {
       // Tournament winner by most rounds (NOT points)
       std::cout << "Tournament winner: " << tour.winnerName(human, cpu) << "\n";
