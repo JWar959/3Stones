@@ -86,15 +86,19 @@ static Stone readStoneFromInv(const Inventory& inv,
                               const Human::HelpFn& help,
                               Stone myColor) {
   while (true) {
-    std::cout << "Stone to play (B/W/C) or H for help: ";
     char ch;
-    if (!(std::cin >> ch)) {
+    for (;;) {
+      std::cout << "Stone to play (B/W/C) or H for help: ";
+      if (std::cin >> ch) {
+        ch = std::toupper(static_cast<unsigned char>(ch));
+      if (ch=='B' || ch=='W' || ch=='C' || ch=='H') break;
+      }
+      std::cout << "Invalid. Enter B, W, C, or H.\n";
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      continue;
+      ch = std::toupper(static_cast<unsigned char>(ch));
     }
-    ch = std::toupper(static_cast<unsigned char>(ch));
-
+    
     if (ch == 'H') {
       if (help) {
           Move rec = help(board, oppLast, myColor, inv);
@@ -108,7 +112,8 @@ static Stone readStoneFromInv(const Inventory& inv,
       } else {
           std::cout << "Help not available.\n";
       }
-    continue; // re-prompt for B/W/C or another H (important!)
+    // re-prompt for B/W/C or another H
+    continue; 
     }
 
     if (ch == 'B' && inv.black > 0) return Stone::B;
@@ -123,7 +128,8 @@ static Stone readStoneFromInv(const Inventory& inv,
 
 Move Human::chooseMove(Board& board, Coord oppLast) {
   Move m;
-  Stone myColor = this->inv().myColor; // human’s actual color
+  // human’s actual color
+  Stone myColor = this->inv().myColor; 
   m.played = readStoneFromInv(this->inv(), board, oppLast, help_, myColor);
   m.pos.r = readIntInRange("Row (1-11): ", 1, 11) - 1;
   m.pos.c = readIntInRange("Col (1-11): ", 1, 11) - 1;

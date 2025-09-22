@@ -15,7 +15,8 @@
 #include <iostream>
 #include <string>
 #include <cctype>
-#include <sstream>   
+#include <sstream>
+#include <cmath>  
 
 // Function prototypes
 // Reset per-round inventory/points but keep roundsWon (tournament stat)
@@ -79,9 +80,17 @@ int main() {
 
     // Let the user choose New vs Resume EVERY round (matches instructor text)
     char mode;
-    std::cout << "(N)ew game or (R)esume from file? ";
-    std::cin >> mode;
-    mode = std::toupper(static_cast<unsigned char>(mode));
+    while(true){
+      std::cout << "(N)ew game or (R)esume from file? ";
+      if (std::cin >> mode) {
+        mode = std::toupper(static_cast<unsigned char>(mode));
+        if (mode =='N' || mode =='R') break;
+      }
+      std::cout << "Invalid. Enter N or R.\n";
+      std::cin.clear();
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+
 
     bool nextIsHuman = true;
     Coord lastOpp{-1,-1};
@@ -147,9 +156,18 @@ int main() {
           moved = true;
 
           // Offer serialize-and-quit
-          std::cout << "Serialize and quit? (Y/N): ";
-          char ans; std::cin >> ans;
-          ans = std::toupper(static_cast<unsigned char>(ans));
+          char ans; 
+          for (;;) {
+            std::cout << "Serialize and quit? (Y/N): ";
+            if (std::cin >> ans) {
+              ans = std::toupper(static_cast<unsigned char>(ans));
+              if (ans=='Y' || ans=='N') break;
+            }
+            std::cout << "Enter Y or N.\n";
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+          }
+          
           if (ans == 'Y') {
             bool nextIsHumanOut = round.currentIsHuman();
             Coord lastOppOut    = round.lastOpponentCoord();
@@ -188,9 +206,17 @@ int main() {
               << ", " << cpu.name() << ": " << cpu.inv().roundsWon << "\n";
 
     // Ask to play another round
-    std::cout << "Play another round? (Y/N): ";
-    char again; std::cin >> again;
-    again = std::toupper(static_cast<unsigned char>(again));
+    char again; 
+    for (;;) {
+      std::cout << "Play another round? (Y/N): ";
+        if (std::cin >> again) {
+          again = std::toupper(static_cast<unsigned char>(again));
+          if (again=='Y' || again=='N') break;
+  }
+  std::cout << "Enter Y or N.\n";
+  std::cin.clear();
+  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
     if (again != 'Y') {
       // Tournament winner by most rounds (NOT points)
       std::cout << "Tournament winner: " << tour.winnerName(human, cpu) << "\n";

@@ -1,0 +1,15 @@
+Human Player: Black 7 10 10 4 1
+Computer Player: White 8 5 0 4 1
+Next Player: Computer 11 7
+Board: 
+        W O B
+      O O O O O
+    W W O O O B B
+  O O O O O O O O O
+O O W O O O O O B O O 
+O O O O O   B O O O O 
+O O O O W O B O W O O
+  O W W O O O B O B   
+    O O W O B O W     
+      O O O B O       
+        C O C   
