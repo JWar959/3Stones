@@ -130,11 +130,25 @@ bool Round::applyMove(const Move& m) {
     }
   }
 
+  // Update the players inventories
   Inventory& inv = turn_->inv();
   if (m.played==Stone::B && inv.black>0) inv.black--;
   else if (m.played==Stone::W && inv.white>0) inv.white--;
   else if (m.played==Stone::C && inv.clear>0) inv.clear--;
   else return false;
+
+  // Output the players updated inventories
+  auto printInv = [&](const Player& P) {
+      const auto& I = P.inv();   // adjust if your accessor differs
+      std::cout << "Stones Remaining " << P.name()
+                << ": B=" << I.black     
+                << " W=" << I.white     
+                << " C=" << I.clear   
+                << "\n";
+  };
+
+  printInv(*human_);
+  printInv(*computer_);
 
   // Place and score
   board_.place(m.pos.r, m.pos.c, m.played);

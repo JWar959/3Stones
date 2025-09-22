@@ -5,10 +5,18 @@
 * Date:  2025-09-016
 *********************************************************************/
 #include "tournament.hpp"
+#include <iostream>
 
 void Tournament::recordRoundOutcome(Player& p1, Player& p2) {
-  if (p1.inv().points > p2.inv().points) p1.inv().roundsWon++;
-  else if (p2.inv().points > p1.inv().points) p2.inv().roundsWon++;
+  if (p1.inv().points > p2.inv().points){
+    p1.inv().roundsWon++;
+  } 
+  else if (p2.inv().points > p1.inv().points) {
+    p2.inv().roundsWon++;
+  }
+  else{
+    std::cout << "\nNo round winner awarded.\n";
+  }
 }
 
 std::string Tournament::winnerName(const Player& p1, const Player& p2) const {

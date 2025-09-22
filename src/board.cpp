@@ -26,10 +26,10 @@ void Board::initShape() {
       // Problem solution row 6 should be fully populated except the center void
       // traversing through columns 0 through 10
       for (int c=0; c<11; ++c) grid_[r][c].valid = true;
-      // center void at (6,6) 
-      grid_[r][5].valid = false;                          
-      continue;
-    }
+        // center void at (6,6) 
+        grid_[r][5].valid = false;                          
+        continue;
+      }
 
     int cnt = counts[r];
     int start = (11 - cnt) / 2;

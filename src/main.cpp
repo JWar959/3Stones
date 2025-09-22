@@ -198,8 +198,10 @@ int main() {
     if(human.inv().points > cpu.inv().points){
       std::cout << "Congratulations " << human.getHumanName() << "! You won the Round!\n"; 
     }
-    else{
+    else if(cpu.inv().points > human.inv().points ){
       std::cout<< "The Computer wins this round!\n";
+    } else{
+      std::cout << "Round is a draw " << human.inv().points << "-" << cpu.inv().points << "\n";
     }          
     std::cout << "Total Rounds won - " << human.name() << ": " << human.inv().roundsWon
               << ", " << cpu.name() << ": " << cpu.inv().roundsWon << "\n";
