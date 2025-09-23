@@ -1,15 +1,15 @@
-Human Player: White 0 15 14 6 0
-Computer Player: Black 0 13 15 6 0
-Next Player: Human 2 5
+Human Player: White 15 0 0 0 1
+Computer Player: Black 15 0 0 0 1
+Next Player: Computer 11 7
 Board:
-  B O O
-  O B O O O
-  O O O O O O O
-  O O O W O O O O O
-O O O O O O O O O O O
-O O O O O O O O O O
-O O O O O O O O O O O
-  O O O O O O O O O
-  O O O O O O O
+  W O B
   O O O O O
-  O O O
+  W W O O O B B
+  O O O O O O B B B
+O O W O O O O O B O O
+W W W W W B O O O O
+O O O O W O B O W O O
+  O W W O B O B O B
+  O O W O W O W
+  O O B W W
+  C C W
