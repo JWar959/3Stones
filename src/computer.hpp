@@ -31,25 +31,19 @@ class Computer : public Player {
     ********************************************************************* */
     Move chooseMove(Board& board, Coord lastOpp) override;
     
-    // File: computer.hpp
-    // Signature: recommendForHuman(Board& board,
-    //                    Coord lastOpp,
-    //                    Stone humanColor,
-    //                    const Inventory& humanInv)
     /* *********************************************************************
     Function Name: recommendForHuman
-    Purpose: Recommend a move to the human player based off of their stone's color as well as
-            the positions of the current stones on the board.
+    Purpose: Produce a recommended Move (with rationale) for the human player
+            using the same evaluation the computer uses for itself.
     Parameters:
-                board, Board&, passed by reference/pointer. Purpose: output via reference
-                lastOpp, Coord, passed by value. Purpose: board coordinate
-                humanColor, Stone, passed by value. Purpose: input parameter
-                humanInv, const Inventory&, passed by reference/pointer. Purpose: input parameter
-    Return Value: Move. See function description for meaning.
+      board, a Board (by reference) – current board.
+      lastOpp, a Coord (by value) – scopes legal targets.
+      humanColor, a Stone (by value) – the human’s color (B or W).
+      humanInv, an Inventory (by const reference) – human’s inventory.
+    Return Value: Move – the recommended play with rationale populated.
     Algorithm:
-                1) Perform the documented steps to achieve the stated purpose.
-                2) Handle edge-cases per rules.
-                3) Return the result or mutate state.
+      1) Call evaluateBestFor(board, lastOpp, humanColor, humanInv, compColor).
+      2) Copy rationale; return the Move.
     Reference: None
     ********************************************************************* */
     Move recommendForHuman(Board& board,
@@ -97,26 +91,26 @@ class Computer : public Player {
       bool blocked{false};  
     };
 
-    // File: computer.hpp
-    // Signature: evaluateBestFor(Board& board,
-    //                      Coord lastOpp,
-    //                      Stone actorColor,
-    //                      const Inventory& actorInv,
-    //                      Stone opponentColor)
     /* *********************************************************************
     Function Name: evaluateBestFor
-    Purpose: Score a candidate move: immediate points for us, opponent's best reply, and net utility.
+    Purpose: Score all legal (cell, stone) pairs for the actor and pick the best
+            according to utility combining myPts, oppBestPts, and blocking.
     Parameters:
-                board, Board&, passed by reference/pointer. Purpose: output via reference
-                lastOpp, Coord, passed by value. Purpose: board coordinate
-                actorColor, Stone, passed by value. Purpose: input parameter
-                actorInv, const Inventory&, passed by reference/pointer. Purpose: input parameter
-                opponentColor, Stone, passed by value. Purpose: input parameter
-    Return Value: Scored. See function description for meaning.
+      board, a Board (by reference) – current board.
+      lastOpp, a Coord (by value) – last opponent move for row/col scope.
+      actorColor, a Stone (by value) – mover’s color (B or W).
+      actorInv, an Inventory (by const reference) – mover’s inventory.
+      opponentColor, a Stone (by value) – opponent color (B or W).
+    Return Value: Scored – best move with fields (Move m, myPts, oppBestPts, utility, blocked).
     Algorithm:
-                1) Perform the documented steps to achieve the stated purpose.
-                2) Handle edge-cases per rules.
-                3) Return the result or mutate state.
+      1) Build legal cells and candidate stones from actorInv.
+      2) For each (cell, stone):
+          a) Temporarily place, compute (myPts, oppPts) via Board::scoreFromPlacement.
+          b) Estimate oppBestPts with opponentBestResponsePts.
+          c) Compute utility with your net/priority scheme; mark blocked if threat removed.
+          d) Store a ScoredLine for help listing.
+          e) Undo placement.
+      3) Return the argmax by utility, with a human-readable rationale.
     Reference: None
     ********************************************************************* */
     Scored evaluateBestFor(Board& board,
@@ -125,89 +119,79 @@ class Computer : public Player {
                           const Inventory& actorInv,
                           Stone opponentColor);
 
-    // File: computer.hpp
-    // Signature: opponentBestResponsePts(Board& board, Coord ourMovePos, Stone opponentColor)
     /* *********************************************************************
     Function Name: opponentBestResponsePts
-    Purpose: Compute the best points the opponent can earn in reply to our tentative move.
+    Purpose: For a hypothetical ourMovePos, compute the maximum points the
+            opponent could earn with their next play (1-ply lookahead).
     Parameters:
-                board, Board&, passed by reference/pointer. Purpose: output via reference
-                ourMovePos, Coord, passed by value. Purpose: board coordinate
-                opponentColor, Stone, passed by value. Purpose: input parameter
-    Return Value: int. Count, index, points, or status code as described.
+      board, a Board (by reference) – current board (temporarily modified).
+      ourMovePos, a Coord (by value) – the pocket we hypothetically fill.
+      opponentColor, a Stone (by value) – opponent’s color (B or W).
+    Return Value: int – best (maximum) opponent points from one response.
     Algorithm:
-                1) Perform the documented steps to achieve the stated purpose.
-                2) Handle edge-cases per rules.
-                3) Return the result or mutate state.
+      1) For each legal opponent target and each stone candidate in their inventory:
+          a) Temporarily place stone, call scoreFromPlacement, record points.
+          b) Undo placement.
+      2) Return the maximum points observed.
     Reference: None
     ********************************************************************* */
     int opponentBestResponsePts(Board& board, Coord ourMovePos, Stone opponentColor);
 
-    // File: computer.hpp
-    // Signature: enumLegalCells(Board& board, Coord lastOpp, std::vector<Coord>& out)
     /* *********************************************************************
     Function Name: enumLegalCells
-    Purpose: Enumerate all legal pockets given last opponent coordinate (row or column constraints).
+    Purpose: Collect all empty pockets in the opponent’s last row and column,
+            unless both are full—then collect all empty valid pockets.
     Parameters:
-                board, Board&, passed by reference/pointer. Purpose: output via reference
-                lastOpp, Coord, passed by value. Purpose: board coordinate
-                out, std::vector<Coord>&, passed by reference/pointer. Purpose: board coordinate
-    Return Value: void. Performs side effects only.
+      board, a Board (by reference) – current board.
+      lastOpp, a Coord (by value) – opponent’s last move, or (-1,-1) at start.
+      out, a std::vector<Coord> (by reference) – receives legal targets.
+    Return Value: none
     Algorithm:
-                1) Perform the documented steps to achieve the stated purpose.
-                2) Handle edge-cases per rules.
-                3) Return the result or mutate state.
+      1) If lastOpp invalid or both its row/col have no empties, scan entire board.
+      2) Else, scan row(lastOpp) and col(lastOpp) for empty valid pockets.
     Reference: None
     ********************************************************************* */
     void enumLegalCells(Board& board, Coord lastOpp, std::vector<Coord>& out);
     
-    // File: computer.hpp
-    // Signature: candidateStones(const Inventory& inv, std::vector<Stone>& out)
     /* *********************************************************************
     Function Name: candidateStones
-    Purpose: Predicate: return true if the condition holds.
+    Purpose: Enumerate which stones (B/W/C) the actor can still play given inventory.
     Parameters:
-                inv, const Inventory&, passed by reference/pointer. Purpose: input parameter
-                out, std::vector<Stone>&, passed by reference/pointer. Purpose: output via reference
-    Return Value: void. Performs side effects only.
+      inv, an Inventory (by const reference) – actor’s counts.
+      out, a std::vector<Stone> (by reference) – receives available stones.
+    Return Value: none
     Algorithm:
-                1) Check inputs.
-                2) Evaluate the condition in constant time.
-                3) Return the boolean result.
+      1) If inv.myColorCount > 0 push myColor.
+      2) If inv.otherColorCount > 0 push other color (if allowed by rules).
+      3) If inv.clearCount > 0 push Stone::C.
     Reference: None
     ********************************************************************* */
     void candidateStones(const Inventory& inv, std::vector<Stone>& out) const;
 
-    // File: computer.hpp
-    // Signature: isOpponentThreatAt(Board& board, const Coord& p, Stone opponentColor)
     /* *********************************************************************
     Function Name: isOpponentThreatAt
-    Purpose: Detect whether placing a stone blocks an opponent 3-in-a-row threat.
+    Purpose: Detect whether the opponent could immediately score at pocket p
+            (used to mark [blocks] and to prioritize blocks).
     Parameters:
-                board, Board&, passed by reference/pointer. Purpose: output via reference
-                p, const Coord&, passed by reference/pointer. Purpose: board coordinate
-                opponentColor, Stone, passed by value. Purpose: input parameter
-    Return Value: bool. True if the stated condition holds; false otherwise.
+      board, a Board (by reference) – current board.
+      p, a Coord (by const reference) – pocket to test.
+      opponentColor, a Stone (by value) – opponent’s color (B or W).
+    Return Value: bool – true if opponent has a 3-in-a-row opportunity at p.
     Algorithm:
-                1) Check inputs.
-                2) Evaluate the condition in constant time.
-                3) Return the boolean result.
+      1) For each applicable 3-pocket window containing p, check if it is
+        opponent-or-clear without empties (not all clear).
     Reference: None
     ********************************************************************* */
     bool isOpponentThreatAt(Board& board, const Coord& p, Stone opponentColor);
     
-    // File: computer.hpp
-    // Signature: rationaleText(const Scored& s)
     /* *********************************************************************
     Function Name: rationaleText
-    Purpose: Implements a cohesive step of the 3 Stones gameplay in this module.
+    Purpose: Build a one-line human explanation of the chosen move’s reasoning.
     Parameters:
-                s, const Scored&, passed by reference/pointer. Purpose: input parameter
-    Return Value: std::string. Human-readable message or status.
+      s, a Scored (by const reference) – fields (myPts, oppBestPts, utility, blocked).
+    Return Value: std::string – explanation suitable for UI/help.
     Algorithm:
-                1) Perform the documented steps to achieve the stated purpose.
-                2) Handle edge-cases per rules.
-                3) Return the result or mutate state.
+      1) Compose text including net value and whether it blocks a threat.
     Reference: None
     ********************************************************************* */
     static std::string rationaleText(const Scored& s);

@@ -33,16 +33,58 @@ struct Inventory {
 
 class Player {
 public:
+
+  /* *********************************************************************
+  Function Name: Player (constructor)
+  Purpose: Construct a player (human or computer) with a name and kind;
+          initialize inventory counters.
+  Parameters:
+    name, a std::string (by const reference) – player’s display name.
+    kind, a PlayerKind (by value) – Human or Computer.
+  Return Value: none
+  Reference: None
+  ********************************************************************* */
   Player(std::string name, PlayerKind kind) : name_(std::move(name)), kind_(kind) {}
   virtual ~Player() = default;
   virtual Move chooseMove(Board& board, Coord lastOpp) = 0;
 
+  /* *********************************************************************
+  Function Name: name
+  Purpose: Selector – read-only access to player’s name.
+  Parameters: none
+  Return Value: const std::string& – player name.
+  Reference: None
+  ********************************************************************* */
   const std::string& name() const { return name_; }
+
+  /* *********************************************************************
+  Function Name: kind
+  Purpose: Selector – read-only access to player type.
+  Parameters: none
+  Return Value: PlayerKind – Human or Computer.
+  Reference: None
+  ********************************************************************* */
   PlayerKind kind() const { return kind_; }
+
+  /* *********************************************************************
+  Function Name: inv (const / non-const)
+  Purpose: Selector/Mutator access to the player’s inventory (stones, points).
+  Parameters: none
+  Return Value:
+    const Inventory& / Inventory& – reference to inventory.
+  Reference: None
+  ********************************************************************* */
   const Inventory& inv() const { return inv_; }
   Inventory& inv() { return inv_; }
 
-  //let the serializer install a parsed inventory atomically
+  /* *********************************************************************
+  Function Name: setInventory
+  Purpose: Replace the player’s inventory atomically (used by deserialization).
+  Parameters:
+    in, an Inventory (by const reference) – replacement inventory values.
+  Return Value: none
+  Reference: None
+  ********************************************************************* */
   void setInventory(const Inventory& in) { inv_ = in; }
 
 protected:

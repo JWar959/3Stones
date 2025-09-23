@@ -22,6 +22,21 @@
 // Reset per-round inventory/points but keep roundsWon (tournament stat)
 static void resetForNewRound(Player& p);
 
+/* *********************************************************************
+Function Name: main
+Purpose: Drive the application: build core objects, let the user start a
+         new game or resume from a file, run a round, and handle saving.
+Parameters: none
+Return Value: int – process exit status (0 on success).
+Algorithm:
+  1) Construct Board, BoardView, Human, Computer, Round, Tournament.
+  2) Ask for (N)ew or (R)esume; if resume, prompt for filename and load.
+  3) If resumed, call Round::initFromLoad to finish wiring state.
+  4) Loop a round: alternate human/computer turns with input validation,
+     help, scoring, printing, and optional serialization after each turn.
+  5) Ask to play another round; announce tournament winner if exiting.
+Reference: None
+********************************************************************* */
 int main() {
 
   Board board;

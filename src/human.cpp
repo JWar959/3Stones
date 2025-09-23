@@ -12,8 +12,18 @@
 #include <string>
 #include <fstream>
 
-// ---------- small local helpers (file-scope) ----------
 
+/* *********************************************************************
+Function Name: readIntInRange (file-scope helper)
+Purpose: Read an integer constrained to [lo..hi].
+Parameters:
+  prompt, a const char* (by value) – message to show.
+  lo, an int (by value) – inclusive lower bound.
+  hi, an int (by value) – inclusive upper bound.
+Return Value: int – accepted integer within range.
+Algorithm: Loop until (cin >> x) succeeds and lo ≤ x ≤ hi; otherwise clear/ignore.
+Reference: None
+********************************************************************* */
 static int readIntInRange(const std::string& prompt, int lo, int hi) {
   while (true) {
     std::cout << prompt;
@@ -79,7 +89,22 @@ std::string Human::getHumanName(){
   return this->humanName_;
 }
 
-// Reads a stone and optionally uses the help callback when user enters 'H'
+
+/* *********************************************************************
+Function Name: readStoneFromInv (file-scope helper)
+Purpose: Let the human choose B/W/C subject to inventory, or request help.
+Parameters:
+  inv, an Inventory (by const reference) – remaining stones for human.
+  board, a Board (by reference) – current board (for help callback).
+  oppLast, a Coord (by value) – last opponent move (for help scope).
+  help, a Human::HelpFn (by value) – recommendation callback.
+  myColor, a Stone (by value) – human’s assigned color (B or W).
+Return Value: Stone – B, W, or C once a legal choice is made.
+Algorithm:
+  1) Prompt for B/W/C/H; if H, call help(board, oppLast, myColor, inv) and re-prompt.
+  2) Reject a color whose inventory is 0; otherwise accept.
+Reference: None
+********************************************************************* */
 static Stone readStoneFromInv(const Inventory& inv,
                               Board& board,
                               Coord oppLast,
