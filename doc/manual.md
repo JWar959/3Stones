@@ -6,9 +6,9 @@ output:
 # Project Manual — 3 Stones (Milestone 1)
 
 ## Bug Report
-- No known bugs in Milestone 1 features (basic game loop works).
-- Scoring is stubbed out (always returns 0) – this is expected for Week 1.
-- Resume/load not implemented yet.
+- Loading from the default serialization option (to save.txt) will occasionally fail to load. After multiple attmpts to recreate the crash that occured during my live presentation, I was unable to replicate the behavior exhibited in the failed load state of the file.
+
+- The scoring algorithm weigh blocking moves heavily, with these blocking moves often outscoring moves that score points. Although not technically a bug, I felt it was worth noting due to the fact that during live demonstrations, this topic was brought up often.
 
 ## Screenshots
 
@@ -134,3 +134,4 @@ Designing helper utilities (help callback wiring, rationale field).
 
 ### Screnshot 1
 ![Screenshot 3](img/m2-3.png)
+

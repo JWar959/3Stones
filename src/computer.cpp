@@ -55,6 +55,24 @@ Computer::listAllHumanCandidates(Board& board, Coord lastOpp,
   return out;
 }
 
+// File: computer.cpp
+// Signature: Computer::recommendForHuman(Board& board, Coord lastOpp,
+//                               Stone humanColor, const Inventory& humanInv)
+/* *********************************************************************
+Function Name: recommendForHuman
+Purpose: Implements a recommended move list for the player to choose from.
+Parameters:
+            board, Board&, passed by reference/pointer. Purpose: output via reference
+            lastOpp, Coord, passed by value. Purpose: board coordinate
+            humanColor, Stone, passed by value. Purpose: input parameter
+            humanInv, const Inventory&, passed by reference/pointer. Purpose: input parameter
+Return Value: Move. See function description for meaning.
+Algorithm:
+            1) Perform the documented steps to achieve the stated purpose.
+            2) Handle edge-cases per rules.
+            3) Return the result or mutate state.
+Reference: None
+********************************************************************* */
 Move Computer::recommendForHuman(Board& board, Coord lastOpp,
                                  Stone humanColor, const Inventory& humanInv) {
   auto all = listAllHumanCandidates(board, lastOpp, humanColor, humanInv);
@@ -104,7 +122,22 @@ Move Computer::recommendForHuman(Board& board, Coord lastOpp,
 
 
 
-// Helper: list legal target cells based on last opponent move and row/col rule
+// File: computer.cpp
+// Signature: Computer::enumLegalCells(Board& board, Coord lastOpp, std::vector<Coord>& out)
+/* *********************************************************************
+Function Name: enumLegalCells
+Purpose: Enumerate all legal pockets given last opponent coordinate (row or column constraints).
+Parameters:
+            board, Board&, passed by reference/pointer. Purpose: output via reference
+            lastOpp, Coord, passed by value. Purpose: board coordinate
+            out, std::vector<Coord>&, passed by reference/pointer. Purpose: board coordinate
+Return Value: void. Performs side effects only.
+Algorithm:
+            1) Perform the documented steps to achieve the stated purpose.
+            2) Handle edge-cases per rules.
+            3) Return the result or mutate state.
+Reference: None
+********************************************************************* */
 void Computer::enumLegalCells(Board& board, Coord lastOpp, std::vector<Coord>& out) {
   out.clear();
   if (lastOpp.r == -1) {
@@ -121,6 +154,21 @@ void Computer::enumLegalCells(Board& board, Coord lastOpp, std::vector<Coord>& o
   }
 }
 
+// File: computer.cpp
+// Signature: Computer::candidateStones(const Inventory& inv, std::vector<Stone>& out)
+/* *********************************************************************
+Function Name: candidateStones
+Purpose: Predicate: return true if the condition holds.
+Parameters:
+            inv, const Inventory&, passed by reference/pointer. Purpose: input parameter
+            out, std::vector<Stone>&, passed by reference/pointer. Purpose: output via reference
+Return Value: void. Performs side effects only.
+Algorithm:
+            1) Check inputs.
+            2) Evaluate the condition in constant time.
+            3) Return the boolean result.
+Reference: None
+********************************************************************* */
 void Computer::candidateStones(const Inventory& inv, std::vector<Stone>& out) const {
   out.clear();
   if (inv.myColor == Stone::B) {
@@ -133,7 +181,22 @@ void Computer::candidateStones(const Inventory& inv, std::vector<Stone>& out) co
   if (inv.clear>0) out.push_back(Stone::C);
 }
 
-// Would opponent score immediately if they played at p right now?
+// File: computer.cpp
+// Signature: Computer::isOpponentThreatAt(Board& board, const Coord& p, Stone opponentColor)
+/* *********************************************************************
+Function Name: isOpponentThreatAt
+Purpose: Detect whether placing a stone blocks an opponent 3-in-a-row threat.
+Parameters:
+            board, Board&, passed by reference/pointer. Purpose: output via reference
+            p, const Coord&, passed by reference/pointer. Purpose: board coordinate
+            opponentColor, Stone, passed by value. Purpose: input parameter
+Return Value: bool. True if the stated condition holds; false otherwise.
+Algorithm:
+            1) Check inputs.
+            2) Evaluate the condition in constant time.
+            3) Return the boolean result.
+Reference: None
+********************************************************************* */
 bool Computer::isOpponentThreatAt(Board& board, const Coord& p, Stone opponentColor) {
   if (!board.isValidPocket(p.r,p.c) || !board.isEmpty(p.r,p.c)) return false;
 
@@ -150,6 +213,22 @@ bool Computer::isOpponentThreatAt(Board& board, const Coord& p, Stone opponentCo
   return ptsClear >= 1;
 }
 
+// File: computer.cpp
+// Signature: Computer::opponentBestResponsePts(Board& board, Coord ourMovePos, Stone opponentColor)
+/* *********************************************************************
+Function Name: opponentBestResponsePts
+Purpose: Compute the best points the opponent can earn in reply to our tentative move.
+Parameters:
+            board, Board&, passed by reference/pointer. Purpose: output via reference
+            ourMovePos, Coord, passed by value. Purpose: board coordinate
+            opponentColor, Stone, passed by value. Purpose: input parameter
+Return Value: int. Count, index, points, or status code as described.
+Algorithm:
+            1) Perform the documented steps to achieve the stated purpose.
+            2) Handle edge-cases per rules.
+            3) Return the result or mutate state.
+Reference: None
+********************************************************************* */
 int Computer::opponentBestResponsePts(Board& board, Coord ourMovePos, Stone opponentColor) {
   std::vector<Coord> oppCells;
   enumLegalCells(board, ourMovePos, oppCells);
@@ -170,6 +249,26 @@ int Computer::opponentBestResponsePts(Board& board, Coord ourMovePos, Stone oppo
   return best;
 }
 
+// File: computer.cpp
+// Signature: Computer::evaluateBestFor(Board& board, Coord lastOpp,
+//                       Stone actorColor, const Inventory& actorInv,
+//                       Stone opponentColor)
+/* *********************************************************************
+Function Name: evaluateBestFor
+Purpose: Score a candidate move: immediate points for us, opponent's best reply, and net utility.
+Parameters:
+            board, Board&, passed by reference/pointer. Purpose: output via reference
+            lastOpp, Coord, passed by value. Purpose: board coordinate
+            actorColor, Stone, passed by value. Purpose: input parameter
+            actorInv, const Inventory&, passed by reference/pointer. Purpose: input parameter
+            opponentColor, Stone, passed by value. Purpose: input parameter
+Return Value: Computer::Scored. See function description for meaning.
+Algorithm:
+            1) Perform the documented steps to achieve the stated purpose.
+            2) Handle edge-cases per rules.
+            3) Return the result or mutate state.
+Reference: None
+********************************************************************* */
 Computer::Scored Computer::evaluateBestFor(Board& board, Coord lastOpp,
                          Stone actorColor, const Inventory& actorInv,
                          Stone opponentColor) {
@@ -218,10 +317,38 @@ Computer::Scored Computer::evaluateBestFor(Board& board, Coord lastOpp,
   return best;
 }
 
+// File: computer.cpp
+// Signature: posStr(const Coord& p)
+/* *********************************************************************
+Function Name: posStr
+Purpose: Implements a cohesive step of the 3 Stones gameplay in this module.
+Parameters:
+            p, const Coord&, passed by reference/pointer. Purpose: board coordinate
+Return Value: std::string.
+Algorithm:
+            1) Perform the documented steps to achieve the stated purpose.
+            2) Handle edge-cases per rules.
+            3) Return the result or mutate state.
+Reference: None
+********************************************************************* */
 static std::string posStr(const Coord& p) {
   return "(" + std::to_string(p.r+1) + "," + std::to_string(p.c+1) + ")";
 }
 
+// File: computer.cpp
+// Signature: Computer::rationaleText(const Scored& s)
+/* *********************************************************************
+Function Name: rationaleText
+Purpose: Returns the rationale behind the decision made for the suggested move
+Parameters:
+            s, const Scored&, passed by reference/pointer. Purpose: input parameter
+Return Value: std::string. Human-readable message or status.
+Algorithm:
+            1) Perform the documented steps to achieve the stated purpose.
+            2) Handle edge-cases per rules.
+            3) Return the result or mutate state.
+Reference: None
+********************************************************************* */
 std::string Computer::rationaleText(const Scored& s) {
   std::string why;
   why += "It selected " + stoneToString(s.m.played) + " at " + posStr(s.m.pos) + " ";
@@ -232,6 +359,21 @@ std::string Computer::rationaleText(const Scored& s) {
   return why;
 }
 
+// File: computer.cpp
+// Signature: Computer::chooseMove(Board& board, Coord lastOpp)
+/* *********************************************************************
+Function Name: chooseMove
+Purpose: Enumerate legal moves and choose the best according to strategy (maximize net gain; block opponent threats); also return rationale string.
+Parameters:
+            board, Board&, passed by reference/pointer. Purpose: output via reference
+            lastOpp, Coord, passed by value. Purpose: board coordinate
+Return Value: Move. See function description for meaning.
+Algorithm:
+            1) Enumerate all legal move pockets given the last opponent coordinate (row/column rule).
+            2) For each candidate, simulate our placement to compute immediate points; then estimate opponent best response points; compute net utility.
+            3) Prefer blocking moves that deny opponent scoring; break ties by higher net; return chosen move and a rationale string.
+Reference: None
+********************************************************************* */
 Move Computer::chooseMove(Board& board, Coord lastOpp) {
   const auto& invMe = this->inv();
   Stone myColor  = invMe.myColor;
